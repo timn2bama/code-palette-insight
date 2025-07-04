@@ -1,11 +1,84 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import Navigation from "@/components/Navigation";
+import heroImage from "@/assets/hero-wardrobe.jpg";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-subtle">
+      <Navigation />
+      
+      {/* Hero Section */}
+      <div className="relative pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-5xl md:text-6xl font-bold text-primary mb-6 leading-tight">
+                Your Smart
+                <span className="text-transparent bg-clip-text bg-gradient-accent"> Wardrobe</span>
+                <br />Assistant
+              </h1>
+              <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+                Track your style, create perfect outfits, and never miss a sale on your favorite pieces. 
+                StyleSync makes wardrobe management effortless and elegant.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button variant="premium" size="lg" className="text-lg px-8 py-6">
+                  ✨ Start Organizing
+                </Button>
+                <Button variant="elegant" size="lg" className="text-lg px-8 py-6">
+                  👔 View Wardrobe
+                </Button>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-accent rounded-3xl blur-2xl opacity-20"></div>
+              <img 
+                src={heroImage} 
+                alt="Elegant wardrobe collection"
+                className="relative z-10 rounded-3xl shadow-elegant w-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Grid */}
+      <div className="container mx-auto px-4 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl mb-4">👔</div>
+              <h3 className="font-semibold text-primary mb-2">Smart Tracking</h3>
+              <p className="text-sm text-muted-foreground">Monitor your most-worn pieces and wardrobe analytics</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl mb-4">✨</div>
+              <h3 className="font-semibold text-primary mb-2">Outfit Creator</h3>
+              <p className="text-sm text-muted-foreground">Mix and match with our intuitive style builder</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl mb-4">🌤️</div>
+              <h3 className="font-semibold text-primary mb-2">Weather Sync</h3>
+              <p className="text-sm text-muted-foreground">Get outfit suggestions based on local weather</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-4xl mb-4">🔧</div>
+              <h3 className="font-semibold text-primary mb-2">Local Services</h3>
+              <p className="text-sm text-muted-foreground">Find trusted cleaners and tailors nearby</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
