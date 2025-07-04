@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
+import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -157,9 +158,10 @@ const Wardrobe = () => {
 
         {/* Add Item Button */}
         <div className="text-center mt-8">
-          <Button variant="premium" size="lg" className="shadow-glow">
-            Add New Item to Wardrobe
-          </Button>
+          <AddWardrobeItemDialog onItemAdded={() => {
+            // Refresh the page or reload data when item is added
+            window.location.reload();
+          }} />
         </div>
       </div>
     </div>
