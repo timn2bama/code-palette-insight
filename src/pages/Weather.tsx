@@ -83,24 +83,55 @@ const Weather = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Simulate weather data for current location
-        // In a real app, you'd fetch this from a weather API
-        const currentLocationData = {
-          city: `Current Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`,
-          weather: "Unknown - GPS Located",
-          suggestion: "Enable location-based weather for accurate outfit suggestions",
-          outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
-        };
+        try {
+          // Use reverse geocoding to get city name
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          
+          const cityName = data.address?.city || 
+                          data.address?.town || 
+                          data.address?.village || 
+                          data.display_name?.split(',')[0] || 
+                          `Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
+          
+          const state = data.address?.state || '';
+          const city = state ? `${cityName}, ${state}` : cityName;
+          
+          const currentLocationData = {
+            city: city,
+            weather: "Unknown - GPS Located",
+            suggestion: "Enable location-based weather for accurate outfit suggestions",
+            outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
+          };
 
-        setTravelDestinations(prev => [currentLocationData, ...prev]);
-        
-        toast({
-          title: "Location Added!",
-          description: "Your current location has been added to travel destinations.",
-        });
+          setTravelDestinations(prev => [currentLocationData, ...prev]);
+          
+          toast({
+            title: "Location Added!",
+            description: `${city} has been added to travel destinations.`,
+          });
+          
+        } catch (error) {
+          // Fallback to coordinates if geocoding fails
+          const currentLocationData = {
+            city: `Current Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`,
+            weather: "Unknown - GPS Located",
+            suggestion: "Enable location-based weather for accurate outfit suggestions",
+            outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
+          };
+
+          setTravelDestinations(prev => [currentLocationData, ...prev]);
+          
+          toast({
+            title: "Location Added!",
+            description: "Your current location has been added to travel destinations.",
+          });
+        }
         
         setLocationLoading(false);
       },
