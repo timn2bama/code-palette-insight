@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const Weather = () => {
+  const { toast } = useToast();
   const [currentWeather, setCurrentWeather] = useState({
     temperature: 72,
     condition: "Partly Cloudy",
@@ -12,6 +14,28 @@ const Weather = () => {
     windSpeed: 8,
     icon: "🌤️",
   });
+
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [travelDestinations, setTravelDestinations] = useState([
+    {
+      city: "New York",
+      weather: "Cool, 58°F",
+      suggestion: "Bring layers and a warm coat",
+      outfit: ["Wool Coat", "Sweater", "Dark Jeans", "Boots"],
+    },
+    {
+      city: "Miami",
+      weather: "Hot, 85°F",
+      suggestion: "Light, breathable fabrics",
+      outfit: ["Tank Top", "Linen Shorts", "Sandals", "Sunglasses"],
+    },
+    {
+      city: "Seattle",
+      weather: "Rainy, 62°F",
+      suggestion: "Waterproof layers essential",
+      outfit: ["Rain Jacket", "Long Sleeve Shirt", "Jeans", "Waterproof Shoes"],
+    },
+  ]);
 
   const [forecast] = useState([
     { day: "Today", high: 75, low: 62, condition: "Partly Cloudy", icon: "🌤️" },
@@ -45,26 +69,71 @@ const Weather = () => {
     },
   ];
 
-  const travelDestinations = [
-    {
-      city: "New York",
-      weather: "Cool, 58°F",
-      suggestion: "Bring layers and a warm coat",
-      outfit: ["Wool Coat", "Sweater", "Dark Jeans", "Boots"],
-    },
-    {
-      city: "Miami",
-      weather: "Hot, 85°F",
-      suggestion: "Light, breathable fabrics",
-      outfit: ["Tank Top", "Linen Shorts", "Sandals", "Sunglasses"],
-    },
-    {
-      city: "Seattle",
-      weather: "Rainy, 62°F",
-      suggestion: "Waterproof layers essential",
-      outfit: ["Rain Jacket", "Long Sleeve Shirt", "Jeans", "Waterproof Shoes"],
-    },
-  ];
+  const getCurrentLocation = () => {
+    setLocationLoading(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Error",
+        description: "Geolocation is not supported by this browser.",
+        variant: "destructive",
+      });
+      setLocationLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        // Simulate weather data for current location
+        // In a real app, you'd fetch this from a weather API
+        const currentLocationData = {
+          city: `Current Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`,
+          weather: "Unknown - GPS Located",
+          suggestion: "Enable location-based weather for accurate outfit suggestions",
+          outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
+        };
+
+        setTravelDestinations(prev => [currentLocationData, ...prev]);
+        
+        toast({
+          title: "Location Added!",
+          description: "Your current location has been added to travel destinations.",
+        });
+        
+        setLocationLoading(false);
+      },
+      (error) => {
+        let errorMessage = "Unable to retrieve your location.";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        
+        toast({
+          title: "Location Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -195,8 +264,22 @@ const Weather = () => {
             </div>
             
             <div className="text-center mt-6">
-              <Button variant="premium" size="lg">
-                Add Travel Destination
+              <Button 
+                variant="premium" 
+                size="lg"
+                onClick={getCurrentLocation}
+                disabled={locationLoading}
+              >
+                {locationLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">📍</span>
+                    Getting GPS Location...
+                  </>
+                ) : (
+                  <>
+                    📍 Add Current Location
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
