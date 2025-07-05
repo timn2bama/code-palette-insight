@@ -104,9 +104,9 @@ const Weather = () => {
           
           const currentLocationData = {
             city: city,
-            weather: "Unknown - GPS Located",
-            suggestion: "Enable location-based weather for accurate outfit suggestions",
-            outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
+            weather: `${currentWeather.condition}, ${currentWeather.temperature}°F`,
+            suggestion: "Based on current weather conditions in your area",
+            outfit: ["Light Cardigan", "Comfortable Jeans", "Walking Shoes", "Light Jacket"],
           };
 
           setTravelDestinations(prev => [currentLocationData, ...prev]);
@@ -120,9 +120,9 @@ const Weather = () => {
           // Fallback to coordinates if geocoding fails
           const currentLocationData = {
             city: `Current Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`,
-            weather: "Unknown - GPS Located",
-            suggestion: "Enable location-based weather for accurate outfit suggestions",
-            outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
+            weather: `${currentWeather.condition}, ${currentWeather.temperature}°F`,
+            suggestion: "Based on current weather conditions in your area",
+            outfit: ["Light Cardigan", "Comfortable Jeans", "Walking Shoes", "Light Jacket"],
           };
 
           setTravelDestinations(prev => [currentLocationData, ...prev]);
