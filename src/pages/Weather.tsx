@@ -93,11 +93,14 @@ const Weather = () => {
           );
           const data = await response.json();
           
-          const city = data.address?.city || 
-                      data.address?.town || 
-                      data.address?.village || 
-                      data.display_name?.split(',')[0] || 
-                      `Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
+          const cityName = data.address?.city || 
+                          data.address?.town || 
+                          data.address?.village || 
+                          data.display_name?.split(',')[0] || 
+                          `Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
+          
+          const state = data.address?.state || '';
+          const city = state ? `${cityName}, ${state}` : cityName;
           
           const currentLocationData = {
             city: city,
