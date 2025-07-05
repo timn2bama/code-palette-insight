@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-wardrobe.jpg";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <Navigation />
@@ -18,15 +21,25 @@ const Index = () => {
                 <span className="text-transparent bg-clip-text bg-gradient-accent"> Wardrobe</span>
                 <br />Assistant
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+               <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                 Track your style, create perfect outfits, and never miss a sale on your favorite pieces. 
-                StyleSync makes wardrobe management effortless and elegant.
-              </p>
+                SyncStyle makes wardrobe management effortless and elegant.
+               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="premium" size="lg" className="text-lg px-8 py-6">
+                <Button 
+                  variant="premium" 
+                  size="lg" 
+                  className="text-lg px-8 py-6"
+                  onClick={() => navigate('/wardrobe')}
+                >
                   ✨ Start Organizing
                 </Button>
-                <Button variant="elegant" size="lg" className="text-lg px-8 py-6">
+                <Button 
+                  variant="elegant" 
+                  size="lg" 
+                  className="text-lg px-8 py-6"
+                  onClick={() => navigate('/wardrobe')}
+                >
                   👔 View Wardrobe
                 </Button>
               </div>
