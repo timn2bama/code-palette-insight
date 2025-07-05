@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Weather = () => {
   const { toast } = useToast();
@@ -14,7 +13,6 @@ const Weather = () => {
     humidity: 65,
     windSpeed: 8,
     icon: "🌤️",
-    city: "San Francisco, CA",
   });
 
   const [locationLoading, setLocationLoading] = useState(false);
@@ -39,49 +37,13 @@ const Weather = () => {
     },
   ]);
 
-  const [forecast, setForecast] = useState([
+  const [forecast] = useState([
     { day: "Today", high: 75, low: 62, condition: "Partly Cloudy", icon: "🌤️" },
     { day: "Tomorrow", high: 78, low: 65, condition: "Sunny", icon: "☀️" },
     { day: "Wednesday", high: 73, low: 58, condition: "Rainy", icon: "🌧️" },
     { day: "Thursday", high: 69, low: 55, condition: "Cloudy", icon: "☁️" },
     { day: "Friday", high: 76, low: 63, condition: "Sunny", icon: "☀️" },
   ]);
-  
-  const [currentLocation, setCurrentLocation] = useState(null);
-
-  // Function to fetch weather data from our edge function
-  const fetchWeatherData = async (lat: number, lon: number, city: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-weather', {
-        body: { lat, lon, city }
-      });
-
-      if (error) throw error;
-
-      // Update current weather and forecast
-      setCurrentWeather({
-        temperature: data.current.temperature,
-        condition: data.current.condition,
-        humidity: data.current.humidity,
-        windSpeed: data.current.windSpeed,
-        icon: data.current.icon,
-        city: data.current.city
-      });
-
-      setForecast(data.forecast);
-      setCurrentLocation({ lat, lon, city });
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching weather:', error);
-      toast({
-        title: "Weather Error",
-        description: "Could not fetch weather data. Using default forecast.",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
 
   const weatherSuggestions = [
     {
@@ -140,14 +102,11 @@ const Weather = () => {
           const state = data.address?.state || '';
           const city = state ? `${cityName}, ${state}` : cityName;
           
-          // Fetch weather data for this location
-          await fetchWeatherData(latitude, longitude, city);
-          
           const currentLocationData = {
             city: city,
-            weather: "Weather updated - See current forecast above",
-            suggestion: "Real-time weather data loaded for outfit suggestions",
-            outfit: ["Check current forecast", "Dress for actual conditions", "Layer accordingly"],
+            weather: "Unknown - GPS Located",
+            suggestion: "Enable location-based weather for accurate outfit suggestions",
+            outfit: ["Check current weather", "Dress accordingly", "Layer for comfort"],
           };
 
           setTravelDestinations(prev => [currentLocationData, ...prev]);
@@ -226,7 +185,7 @@ const Weather = () => {
                 <div>
                   <h2 className="text-3xl font-bold text-primary">{currentWeather.temperature}°F</h2>
                   <p className="text-lg text-foreground">{currentWeather.condition}</p>
-                  <p className="text-sm text-muted-foreground">{currentWeather.city}</p>
+                  <p className="text-sm text-muted-foreground">San Francisco, CA</p>
                 </div>
               </div>
               <div className="text-right space-y-2">
