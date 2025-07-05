@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Weather = () => {
   const { toast } = useToast();
@@ -13,8 +14,18 @@ const Weather = () => {
     humidity: 65,
     windSpeed: 8,
     icon: "🌤️",
+    city: "Getting location...",
   });
 
+  const [forecast, setForecast] = useState([
+    { day: "Today", high: 75, low: 62, condition: "Partly Cloudy", icon: "🌤️" },
+    { day: "Tomorrow", high: 78, low: 65, condition: "Sunny", icon: "☀️" },
+    { day: "Wednesday", high: 73, low: 58, condition: "Rainy", icon: "🌧️" },
+    { day: "Thursday", high: 69, low: 55, condition: "Cloudy", icon: "☁️" },
+    { day: "Friday", high: 76, low: 63, condition: "Sunny", icon: "☀️" },
+  ]);
+
+  const [weatherLoading, setWeatherLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
   const [travelDestinations, setTravelDestinations] = useState([
     {
@@ -37,37 +48,167 @@ const Weather = () => {
     },
   ]);
 
-  const [forecast] = useState([
-    { day: "Today", high: 75, low: 62, condition: "Partly Cloudy", icon: "🌤️" },
-    { day: "Tomorrow", high: 78, low: 65, condition: "Sunny", icon: "☀️" },
-    { day: "Wednesday", high: 73, low: 58, condition: "Rainy", icon: "🌧️" },
-    { day: "Thursday", high: 69, low: 55, condition: "Cloudy", icon: "☁️" },
-    { day: "Friday", high: 76, low: 63, condition: "Sunny", icon: "☀️" },
-  ]);
+  const fetchWeatherData = async () => {
+    setWeatherLoading(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Error",
+        description: "Geolocation is not supported by this browser.",
+        variant: "destructive",
+      });
+      setWeatherLoading(false);
+      return;
+    }
 
-  const weatherSuggestions = [
-    {
-      id: 1,
-      weather: "Partly Cloudy, 72°F",
-      outfit: "Light Layers",
-      items: ["Cotton T-shirt", "Light Cardigan", "Jeans", "Comfortable Sneakers"],
-      reason: "Perfect temperature for layering. You can remove the cardigan if it gets warmer.",
-    },
-    {
-      id: 2,
-      weather: "Rainy, 65°F",
-      outfit: "Rain Ready",
-      items: ["Waterproof Jacket", "Dark Jeans", "Waterproof Boots", "Umbrella"],
-      reason: "Stay dry and comfortable. Dark colors hide splashes better.",
-    },
-    {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('get-weather', {
+            body: { latitude, longitude }
+          });
+          
+          if (error) {
+            console.error('Weather API error:', error);
+            toast({
+              title: "Weather Error",
+              description: "Failed to fetch weather data.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (data) {
+            setCurrentWeather({
+              ...data.current,
+              city: data.current.city,
+            });
+            setForecast(data.forecast);
+          }
+          
+        } catch (error) {
+          console.error('Error fetching weather:', error);
+          toast({
+            title: "Weather Error",
+            description: "Failed to get weather information.",
+            variant: "destructive",
+          });
+        }
+        
+        setWeatherLoading(false);
+      },
+      (error) => {
+        let errorMessage = "Unable to retrieve your location.";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        
+        toast({
+          title: "Location Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        setWeatherLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
+  useEffect(() => {
+    fetchWeatherData();
+  }, []);
+
+  const getWeatherBasedSuggestions = () => {
+    const temp = currentWeather.temperature;
+    const condition = currentWeather.condition.toLowerCase();
+    
+    const suggestions = [];
+    
+    // Base suggestion based on temperature
+    if (temp >= 80) {
+      suggestions.push({
+        id: 1,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Summer Comfort",
+        items: ["Light Tank Top", "Linen Shorts", "Sandals", "Sun Hat", "Sunglasses"],
+        reason: "Hot weather calls for breathable fabrics and sun protection.",
+      });
+    } else if (temp >= 65) {
+      suggestions.push({
+        id: 1,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Perfect Layers",
+        items: ["Cotton T-shirt", "Light Cardigan", "Comfortable Jeans", "Sneakers"],
+        reason: "Great temperature for layering. Add or remove layers as needed.",
+      });
+    } else {
+      suggestions.push({
+        id: 1,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Stay Warm",
+        items: ["Warm Sweater", "Jacket", "Long Pants", "Closed-toe Shoes", "Scarf"],
+        reason: "Cool weather requires warm layers and coverage.",
+      });
+    }
+    
+    // Additional suggestion based on weather condition
+    if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('thunderstorm')) {
+      suggestions.push({
+        id: 2,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Rain Ready",
+        items: ["Waterproof Jacket", "Dark Jeans", "Waterproof Boots", "Umbrella"],
+        reason: "Stay dry and comfortable with waterproof layers.",
+      });
+    } else if (condition.includes('snow')) {
+      suggestions.push({
+        id: 2,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Winter Ready",
+        items: ["Heavy Coat", "Warm Sweater", "Insulated Boots", "Gloves", "Warm Hat"],
+        reason: "Snow requires warm, insulated clothing and proper footwear.",
+      });
+    } else if (condition.includes('clear') || condition.includes('sun')) {
+      suggestions.push({
+        id: 2,
+        weather: `${currentWeather.condition}, ${temp}°F`,
+        outfit: "Sunny Day",
+        items: ["Light Shirt", "Comfortable Pants", "Walking Shoes", "Sunglasses"],
+        reason: "Perfect weather for comfortable, casual clothing.",
+      });
+    }
+    
+    // Add a third suggestion based on activity
+    suggestions.push({
       id: 3,
-      weather: "Sunny, 78°F",
-      outfit: "Summer Comfort",
-      items: ["Light Blouse", "Linen Pants", "Sandals", "Sun Hat"],
-      reason: "Breathable fabrics and sun protection for a warm, sunny day.",
-    },
-  ];
+      weather: `${currentWeather.condition}, ${temp}°F`,
+      outfit: "Work/Professional",
+      items: temp >= 70 ? 
+        ["Light Blouse/Shirt", "Dress Pants", "Professional Shoes", "Light Blazer"] :
+        ["Long-sleeve Shirt", "Dress Pants", "Professional Shoes", "Blazer/Suit Jacket"],
+      reason: "Professional attire adjusted for current weather conditions.",
+    });
+    
+    return suggestions;
+  };
+
+  const weatherSuggestions = getWeatherBasedSuggestions();
 
   const getCurrentLocation = () => {
     setLocationLoading(true);
@@ -185,7 +326,7 @@ const Weather = () => {
                 <div>
                   <h2 className="text-3xl font-bold text-primary">{currentWeather.temperature}°F</h2>
                   <p className="text-lg text-foreground">{currentWeather.condition}</p>
-                  <p className="text-sm text-muted-foreground">San Francisco, CA</p>
+                  <p className="text-sm text-muted-foreground">{currentWeather.city}</p>
                 </div>
               </div>
               <div className="text-right space-y-2">
