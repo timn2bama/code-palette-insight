@@ -32,6 +32,7 @@ serve(async (req) => {
 
   try {
     const { location, radius = 10000 } = await req.json();
+    console.log('Request received:', { location, radius });
     
     if (!location) {
       return new Response(
@@ -104,14 +105,22 @@ serve(async (req) => {
       
       // Search with multiple terms for better coverage
       for (const term of category.searchTerms) {
-        const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(term)}+near+${encodeURIComponent(location)}&radius=${radius}&key=${apiKey}`;
+        // Try Text Search first (better for location names)
+        const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(term + ' in ' + location)}&key=${apiKey}`;
         
         try {
-          console.log(`Searching for: ${term} near ${location}`);
-          const response = await fetch(searchUrl);
+          console.log(`Text searching for: ${term} in ${location}`);
+          
+          const response = await fetch(textSearchUrl);
+          
+          if (!response.ok) {
+            console.error(`HTTP Error: ${response.status} - ${response.statusText}`);
+            continue;
+          }
+          
           const data = await response.json();
           
-          console.log(`API Response for ${term}:`, {
+          console.log(`Text API Response for ${term}:`, {
             status: data.status,
             resultsCount: data.results?.length || 0,
             error: data.error_message
