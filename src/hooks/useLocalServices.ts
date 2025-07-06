@@ -17,20 +17,35 @@ interface LocalService {
   isOpen: boolean;
 }
 
-interface UseLocalServicesOptions {
-  location: string;
-  serviceType: string;
+interface ServiceCategory {
+  id: string;
+  name: string;
+  icon: string;
 }
 
-export const useLocalServices = ({ location, serviceType }: UseLocalServicesOptions) => {
-  const [services, setServices] = useState<LocalService[]>([]);
+interface UseLocalServicesOptions {
+  location: string;
+}
+
+interface LocalServicesResponse {
+  servicesByCategory: Record<string, LocalService[]>;
+  categories: ServiceCategory[];
+  stats: {
+    total: number;
+    avgRating: number;
+    openCount: number;
+  };
+}
+
+export const useLocalServices = ({ location }: UseLocalServicesOptions) => {
+  const [data, setData] = useState<LocalServicesResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchServices = async () => {
     if (!location.trim()) {
-      setServices([]);
+      setData(null);
       return;
     }
 
@@ -38,10 +53,9 @@ export const useLocalServices = ({ location, serviceType }: UseLocalServicesOpti
     setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('get-local-services', {
+      const { data: responseData, error } = await supabase.functions.invoke('get-local-services', {
         body: {
           location: location.trim(),
-          serviceType: serviceType === 'all' ? undefined : serviceType,
           radius: 10000 // 10km radius
         }
       });
@@ -50,7 +64,7 @@ export const useLocalServices = ({ location, serviceType }: UseLocalServicesOpti
         throw error;
       }
 
-      setServices(data.services || []);
+      setData(responseData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch local services';
       setError(errorMessage);
@@ -66,10 +80,10 @@ export const useLocalServices = ({ location, serviceType }: UseLocalServicesOpti
 
   useEffect(() => {
     fetchServices();
-  }, [location, serviceType]);
+  }, [location]);
 
   return {
-    services,
+    data,
     loading,
     error,
     refetch: fetchServices,
