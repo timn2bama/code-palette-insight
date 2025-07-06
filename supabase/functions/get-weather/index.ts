@@ -27,25 +27,35 @@ serve(async (req) => {
     }
 
     console.log(`Fetching weather for coordinates: ${latitude}, ${longitude}`);
+    console.log(`API Key present: ${apiKey ? 'Yes' : 'No'}`);
+    console.log(`API Key length: ${apiKey ? apiKey.length : 0}`);
 
     // Fetch current weather
     const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`;
+    console.log(`Current weather URL: ${currentWeatherUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
+    
     const currentResponse = await fetch(currentWeatherUrl);
+    console.log(`Current weather response status: ${currentResponse.status}`);
     
     if (!currentResponse.ok) {
-      console.error('Failed to fetch current weather:', currentResponse.status, currentResponse.statusText);
-      throw new Error(`Weather API error: ${currentResponse.status}`);
+      const errorText = await currentResponse.text();
+      console.error('Failed to fetch current weather:', currentResponse.status, currentResponse.statusText, errorText);
+      throw new Error(`Weather API error: ${currentResponse.status} - ${errorText}`);
     }
     
     const currentData = await currentResponse.json();
 
     // Fetch 5-day forecast
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`;
+    console.log(`Forecast URL: ${forecastUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
+    
     const forecastResponse = await fetch(forecastUrl);
+    console.log(`Forecast response status: ${forecastResponse.status}`);
     
     if (!forecastResponse.ok) {
-      console.error('Failed to fetch forecast:', forecastResponse.status, forecastResponse.statusText);
-      throw new Error(`Forecast API error: ${forecastResponse.status}`);
+      const errorText = await forecastResponse.text();
+      console.error('Failed to fetch forecast:', forecastResponse.status, forecastResponse.statusText, errorText);
+      throw new Error(`Forecast API error: ${forecastResponse.status} - ${errorText}`);
     }
     
     const forecastData = await forecastResponse.json();

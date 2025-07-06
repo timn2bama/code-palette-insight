@@ -26,29 +26,41 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Fetching weather for ${locations.length} locations`);
+          console.log(`Fetching weather for ${locations.length} locations`);
+          console.log(`API Key present: ${apiKey ? 'Yes' : 'No'}`);
+          console.log(`API Key length: ${apiKey ? apiKey.length : 0}`);
 
-    // Fetch weather for all locations in parallel
-    const weatherPromises = locations.map(async (location: { latitude: number; longitude: number; name?: string }) => {
-      try {
-        // Fetch current weather
-        const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${apiKey}&units=imperial`;
-        const currentResponse = await fetch(currentWeatherUrl);
-        
-        if (!currentResponse.ok) {
-          console.error(`Failed to fetch current weather for ${location.name || 'location'}:`, currentResponse.status, currentResponse.statusText);
-          throw new Error(`Weather API error: ${currentResponse.status}`);
-        }
+          // Fetch weather for all locations in parallel
+          const weatherPromises = locations.map(async (location: { latitude: number; longitude: number; name?: string }) => {
+            try {
+              console.log(`Fetching weather for ${location.name}: ${location.latitude}, ${location.longitude}`);
+              
+              // Fetch current weather
+              const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${apiKey}&units=imperial`;
+              console.log(`URL for ${location.name}: ${currentWeatherUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
+              
+              const currentResponse = await fetch(currentWeatherUrl);
+              console.log(`Response status for ${location.name}: ${currentResponse.status}`);
+              
+              if (!currentResponse.ok) {
+                const errorText = await currentResponse.text();
+                console.error(`Failed to fetch current weather for ${location.name || 'location'}:`, currentResponse.status, currentResponse.statusText, errorText);
+                throw new Error(`Weather API error: ${currentResponse.status} - ${errorText}`);
+              }
         
         const currentData = await currentResponse.json();
 
         // Fetch 5-day forecast
         const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${apiKey}&units=imperial`;
+        console.log(`Forecast URL for ${location.name}: ${forecastUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
+        
         const forecastResponse = await fetch(forecastUrl);
+        console.log(`Forecast response status for ${location.name}: ${forecastResponse.status}`);
         
         if (!forecastResponse.ok) {
-          console.error(`Failed to fetch forecast for ${location.name || 'location'}:`, forecastResponse.status, forecastResponse.statusText);
-          throw new Error(`Forecast API error: ${forecastResponse.status}`);
+          const errorText = await forecastResponse.text();
+          console.error(`Failed to fetch forecast for ${location.name || 'location'}:`, forecastResponse.status, forecastResponse.statusText, errorText);
+          throw new Error(`Forecast API error: ${forecastResponse.status} - ${errorText}`);
         }
         
         const forecastData = await forecastResponse.json();
