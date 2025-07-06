@@ -3,11 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import Navigation from "@/components/Navigation";
+import { useLocalServices } from "@/hooks/useLocalServices";
 
 const Services = () => {
   const [searchLocation, setSearchLocation] = useState("San Francisco, CA");
+  const [currentLocation, setCurrentLocation] = useState("San Francisco, CA");
   const [selectedService, setSelectedService] = useState("all");
+  
+  const { services, loading, error, refetch } = useLocalServices({
+    location: currentLocation,
+    serviceType: selectedService
+  });
+
+  const handleSearch = () => {
+    setCurrentLocation(searchLocation);
+    refetch();
+  };
 
   const serviceTypes = [
     { id: "all", name: "All Services", icon: "🔧" },
@@ -19,79 +32,7 @@ const Services = () => {
     { id: "alterations", name: "Alterations", icon: "📏" },
   ];
 
-  const services = [
-    {
-      id: 1,
-      name: "Premium Dry Cleaning Co.",
-      type: "cleaners",
-      rating: 4.8,
-      price: "$$$",
-      distance: "0.3 miles",
-      address: "123 Market St, San Francisco, CA",
-      phone: "(415) 555-0123",
-      services: ["Dry Cleaning", "Laundry", "Alterations"],
-      hours: "Mon-Fri: 7AM-7PM, Sat: 8AM-5PM",
-      specialties: ["Delicate fabrics", "Designer clothing"],
-    },
-    {
-      id: 2,
-      name: "Master Tailor Studio",
-      type: "tailors",
-      rating: 4.9,
-      price: "$$$$",
-      distance: "0.5 miles",
-      address: "456 Union St, San Francisco, CA",
-      phone: "(415) 555-0456",
-      services: ["Custom Tailoring", "Alterations", "Repairs"],
-      hours: "Tue-Sat: 10AM-6PM",
-      specialties: ["Suits", "Formal wear", "Custom fitting"],
-    },
-    {
-      id: 3,
-      name: "Quick Wash Laundromat",
-      type: "laundromats",
-      rating: 4.2,
-      price: "$",
-      distance: "0.7 miles",
-      address: "789 Mission St, San Francisco, CA",
-      phone: "(415) 555-0789",
-      services: ["Self-service", "Wash & Fold", "Drop-off"],
-      hours: "Daily: 6AM-11PM",
-      specialties: ["Large capacity machines", "Express service"],
-    },
-    {
-      id: 4,
-      name: "Artisan Seamstress",
-      type: "seamstresses",
-      rating: 4.7,
-      price: "$$$",
-      distance: "1.2 miles",
-      address: "321 Valencia St, San Francisco, CA",
-      phone: "(415) 555-0321",
-      services: ["Hemming", "Repairs", "Custom work"],
-      hours: "Wed-Sun: 11AM-5PM",
-      specialties: ["Vintage clothing", "Delicate repairs"],
-    },
-    {
-      id: 5,
-      name: "Sole Revival Shoe Repair",
-      type: "shoe-repair",
-      rating: 4.6,
-      price: "$$",
-      distance: "0.9 miles",
-      address: "654 Fillmore St, San Francisco, CA",
-      phone: "(415) 555-0654",
-      services: ["Sole replacement", "Heel repair", "Cleaning"],
-      hours: "Mon-Fri: 9AM-6PM, Sat: 10AM-4PM",
-      specialties: ["Leather shoes", "Boot repair", "Sneaker cleaning"],
-    },
-  ];
-
-  const filteredServices = selectedService === "all" 
-    ? services 
-    : services.filter(service => service.type === selectedService);
-
-  const getPriceColor = (price) => {
+  const getPriceColor = (price: string) => {
     switch (price) {
       case "$": return "text-green-600";
       case "$$": return "text-yellow-600";
@@ -100,6 +41,12 @@ const Services = () => {
       default: return "text-muted-foreground";
     }
   };
+
+  const servicesCount = services.length;
+  const avgRating = services.length > 0 
+    ? (services.reduce((sum, s) => sum + s.rating, 0) / services.length).toFixed(1)
+    : "0.0";
+  const openCount = services.filter(s => s.isOpen).length;
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -126,8 +73,14 @@ const Services = () => {
                   className="bg-background/50"
                 />
               </div>
-              <Button variant="premium" size="lg" className="px-8">
-                🔍 Find Services
+              <Button 
+                variant="premium" 
+                size="lg" 
+                className="px-8"
+                onClick={handleSearch}
+                disabled={loading}
+              >
+                {loading ? "Searching..." : "🔍 Find Services"}
               </Button>
             </div>
           </CardContent>
@@ -153,33 +106,65 @@ const Services = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="shadow-card">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">47</div>
+              <div className="text-2xl font-bold text-primary">{servicesCount}</div>
               <p className="text-sm text-muted-foreground">Services Found</p>
             </CardContent>
           </Card>
           <Card className="shadow-card">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-fashion-gold">4.6</div>
+              <div className="text-2xl font-bold text-fashion-gold">{avgRating}</div>
               <p className="text-sm text-muted-foreground">Avg Rating</p>
             </CardContent>
           </Card>
           <Card className="shadow-card">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-fashion-rose">0.3</div>
-              <p className="text-sm text-muted-foreground">Miles Away</p>
+              <div className="text-2xl font-bold text-fashion-rose">{services.length > 0 ? services[0].distance : "N/A"}</div>
+              <p className="text-sm text-muted-foreground">Closest</p>
             </CardContent>
           </Card>
           <Card className="shadow-card">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-accent">12</div>
+              <div className="text-2xl font-bold text-accent">{openCount}</div>
               <p className="text-sm text-muted-foreground">Open Now</p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="shadow-card">
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Card className="shadow-card">
+            <CardContent className="p-6 text-center">
+              <h3 className="text-lg font-semibold text-destructive mb-2">Error Loading Services</h3>
+              <p className="text-muted-foreground">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Services Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredServices.map((service) => (
+        {!loading && !error && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {services.map((service) => (
             <Card key={service.id} className="shadow-card hover:shadow-elegant transition-all duration-300">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -258,8 +243,9 @@ const Services = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Add Service CTA */}
         <div className="text-center mt-8">

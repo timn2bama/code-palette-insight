@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.get-weather-multiple]
 verify_jwt = false
+
+[functions.get-local-services]
+verify_jwt = false
