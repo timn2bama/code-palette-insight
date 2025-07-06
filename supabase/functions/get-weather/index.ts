@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { latitude, longitude } = await req.json();
-    const apiKey = Deno.env.get('OPENWEATHER_API_KEY');
+    const apiKey = Deno.env.get('WEATHERAPI_KEY');
     
     if (!apiKey) {
-      console.error('OPENWEATHER_API_KEY not found in environment');
+      console.error('WEATHERAPI_KEY not found in environment');
       return new Response(
         JSON.stringify({ error: 'Weather API key not configured' }),
         { 
@@ -30,66 +30,46 @@ serve(async (req) => {
     console.log(`API Key present: ${apiKey ? 'Yes' : 'No'}`);
     console.log(`API Key length: ${apiKey ? apiKey.length : 0}`);
 
-    // Fetch current weather
-    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`;
-    console.log(`Current weather URL: ${currentWeatherUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
+    // Fetch current weather and forecast from WeatherAPI.com
+    const weatherUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${latitude},${longitude}&days=6&aqi=no&alerts=no`;
+    console.log(`Weather URL: ${weatherUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
     
-    const currentResponse = await fetch(currentWeatherUrl);
-    console.log(`Current weather response status: ${currentResponse.status}`);
+    const weatherResponse = await fetch(weatherUrl);
+    console.log(`Weather response status: ${weatherResponse.status}`);
     
-    if (!currentResponse.ok) {
-      const errorText = await currentResponse.text();
-      console.error('Failed to fetch current weather:', currentResponse.status, currentResponse.statusText, errorText);
-      throw new Error(`Weather API error: ${currentResponse.status} - ${errorText}`);
+    if (!weatherResponse.ok) {
+      const errorText = await weatherResponse.text();
+      console.error('Failed to fetch weather:', weatherResponse.status, weatherResponse.statusText, errorText);
+      throw new Error(`Weather API error: ${weatherResponse.status} - ${errorText}`);
     }
     
-    const currentData = await currentResponse.json();
-
-    // Fetch 5-day forecast
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`;
-    console.log(`Forecast URL: ${forecastUrl.replace(apiKey, 'HIDDEN_API_KEY')}`);
-    
-    const forecastResponse = await fetch(forecastUrl);
-    console.log(`Forecast response status: ${forecastResponse.status}`);
-    
-    if (!forecastResponse.ok) {
-      const errorText = await forecastResponse.text();
-      console.error('Failed to fetch forecast:', forecastResponse.status, forecastResponse.statusText, errorText);
-      throw new Error(`Forecast API error: ${forecastResponse.status} - ${errorText}`);
-    }
-    
-    const forecastData = await forecastResponse.json();
+    const weatherData = await weatherResponse.json();
 
     // Process forecast data to get daily forecasts
     const dailyForecasts = [];
-    const today = new Date().toDateString();
     
-    for (let i = 0; i < forecastData.list.length; i += 8) { // Every 8th item (24 hours)
-      const item = forecastData.list[i];
-      const date = new Date(item.dt * 1000);
-      
-      if (date.toDateString() === today) continue; // Skip today
-      if (dailyForecasts.length >= 5) break;
+    // Skip today and get next 5 days
+    for (let i = 1; i < Math.min(weatherData.forecast.forecastday.length, 6); i++) {
+      const day = weatherData.forecast.forecastday[i];
+      const date = new Date(day.date);
       
       dailyForecasts.push({
         day: date.toLocaleDateString('en-US', { weekday: 'long' }),
-        high: Math.round(item.main.temp_max),
-        low: Math.round(item.main.temp_min),
-        condition: item.weather[0].main,
-        icon: getWeatherIcon(item.weather[0].main),
+        high: Math.round(day.day.maxtemp_f),
+        low: Math.round(day.day.mintemp_f),
+        condition: day.day.condition.text,
+        icon: getWeatherIcon(day.day.condition.text),
       });
     }
 
-    const weatherIcon = getWeatherIcon(currentData.weather[0].main);
-
     const result = {
       current: {
-        temperature: Math.round(currentData.main.temp),
-        condition: currentData.weather[0].main,
-        humidity: currentData.main.humidity,
-        windSpeed: Math.round(currentData.wind?.speed || 0),
-        icon: weatherIcon,
-        city: currentData.name,
+        temperature: Math.round(weatherData.current.temp_f),
+        condition: weatherData.current.condition.text,
+        humidity: weatherData.current.humidity,
+        windSpeed: Math.round(weatherData.current.wind_mph),
+        icon: getWeatherIcon(weatherData.current.condition.text),
+        city: weatherData.location.name,
       },
       forecast: dailyForecasts,
     };
