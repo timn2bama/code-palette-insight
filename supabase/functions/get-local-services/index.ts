@@ -169,7 +169,7 @@ serve(async (req) => {
     
     if (totalServices === 0) {
       console.log('No services found, adding test data');
-      // Add sample data for testing
+      // Add sample data for all categories
       servicesByCategory['cleaners'] = [
         {
           id: 'test-cleaner-1',
@@ -200,6 +200,74 @@ serve(async (req) => {
           services: ['Custom Tailoring', 'Alterations', 'Repairs'],
           hours: 'Open Now',
           specialties: ['Suits', 'Formal wear', 'Custom fitting'],
+          isOpen: true,
+        }
+      ];
+
+      servicesByCategory['laundromats'] = [
+        {
+          id: 'test-laundromat-1',
+          name: 'Quick Wash Laundromat',
+          type: 'laundromats',
+          rating: 4.2,
+          price: '$',
+          distance: '1.2 miles',
+          address: '789 Elm St',
+          phone: '(555) 246-8135',
+          services: ['Self-service', 'Wash & Fold', 'Drop-off'],
+          hours: '24/7',
+          specialties: ['Large capacity machines', 'Express service'],
+          isOpen: true,
+        }
+      ];
+
+      servicesByCategory['seamstresses'] = [
+        {
+          id: 'test-seamstress-1',
+          name: 'Artisan Seamstress',
+          type: 'seamstresses',
+          rating: 4.9,
+          price: '$$',
+          distance: '0.7 miles',
+          address: '321 Pine Ave',
+          phone: '(555) 369-2580',
+          services: ['Hemming', 'Repairs', 'Custom work'],
+          hours: 'Tue-Sat 9-5',
+          specialties: ['Vintage clothing', 'Delicate repairs'],
+          isOpen: false,
+        }
+      ];
+
+      servicesByCategory['shoe-repair'] = [
+        {
+          id: 'test-cobbler-1',
+          name: 'Master Cobbler',
+          type: 'shoe-repair',
+          rating: 4.6,
+          price: '$$',
+          distance: '1.5 miles',
+          address: '654 Oak Blvd',
+          phone: '(555) 147-2589',
+          services: ['Sole replacement', 'Heel repair', 'Cleaning'],
+          hours: 'Mon-Fri 8-6',
+          specialties: ['Leather shoes', 'Boot repair', 'Sneaker cleaning'],
+          isOpen: true,
+        }
+      ];
+
+      servicesByCategory['alterations'] = [
+        {
+          id: 'test-alterations-1',
+          name: 'Perfect Fit Alterations',
+          type: 'alterations',
+          rating: 4.4,
+          price: '$$',
+          distance: '0.9 miles',
+          address: '987 Maple Dr',
+          phone: '(555) 852-7410',
+          services: ['Alterations', 'Repairs', 'Custom work'],
+          hours: 'Mon-Sat 10-7',
+          specialties: ['Professional alterations', 'Quick turnaround'],
           isOpen: true,
         }
       ];
