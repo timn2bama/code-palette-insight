@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TravelDestination {
@@ -13,7 +13,7 @@ interface CurrentWeather {
   condition: string;
 }
 
-export const useTravelDestinations = (currentWeather: CurrentWeather) => {
+export const useTravelDestinations = (currentWeather: CurrentWeather, allWeatherData?: any[]) => {
   const { toast } = useToast();
   const [locationLoading, setLocationLoading] = useState(false);
   const [travelDestinations, setTravelDestinations] = useState<TravelDestination[]>([
@@ -36,6 +36,55 @@ export const useTravelDestinations = (currentWeather: CurrentWeather) => {
       outfit: ["Rain Jacket", "Long Sleeve Shirt", "Jeans", "Waterproof Shoes"],
     },
   ]);
+
+  // Update travel destinations with real weather data
+  useEffect(() => {
+    if (allWeatherData && allWeatherData.length > 0) {
+      const updatedDestinations = allWeatherData
+        .filter(location => location.location !== "Current Location" && !location.error)
+        .map(location => {
+          const temp = location.current.temperature;
+          const condition = location.current.condition;
+          
+          let suggestion = "";
+          let outfit: string[] = [];
+          
+          if (temp >= 80) {
+            suggestion = "Hot weather - stay cool with breathable fabrics";
+            outfit = ["Light Tank Top", "Shorts", "Sandals", "Sunglasses"];
+          } else if (temp >= 65) {
+            suggestion = "Perfect weather for comfortable layers";
+            outfit = ["T-shirt", "Light Cardigan", "Jeans", "Sneakers"];
+          } else if (temp >= 50) {
+            suggestion = "Cool weather - bring warm layers";
+            outfit = ["Sweater", "Jacket", "Long Pants", "Closed-toe Shoes"];
+          } else {
+            suggestion = "Cold weather - dress warmly";
+            outfit = ["Warm Coat", "Sweater", "Insulated Boots", "Gloves"];
+          }
+          
+          // Adjust for weather conditions
+          if (condition.toLowerCase().includes('rain')) {
+            suggestion = "Rainy weather - waterproof gear essential";
+            outfit = ["Waterproof Jacket", "Umbrella", "Waterproof Shoes", "Dark Colors"];
+          } else if (condition.toLowerCase().includes('snow')) {
+            suggestion = "Snowy weather - warm, insulated clothing";
+            outfit = ["Heavy Coat", "Warm Sweater", "Insulated Boots", "Gloves", "Hat"];
+          }
+          
+          return {
+            city: location.current.city,
+            weather: `${condition}, ${temp}°F`,
+            suggestion,
+            outfit,
+          };
+        });
+      
+      if (updatedDestinations.length > 0) {
+        setTravelDestinations(updatedDestinations);
+      }
+    }
+  }, [allWeatherData]);
 
   const getCurrentLocation = () => {
     setLocationLoading(true);

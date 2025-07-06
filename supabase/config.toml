@@ -37,3 +37,7 @@ enabled = true
 port = 54326
 
 [functions.get-weather]
+verify_jwt = false
+
+[functions.get-weather-multiple]
+verify_jwt = false

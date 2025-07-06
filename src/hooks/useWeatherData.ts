@@ -122,6 +122,110 @@ export const useWeatherData = () => {
     );
   };
 
+  const fetchAllWeatherData = async () => {
+    setWeatherLoading(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Error",
+        description: "Geolocation is not supported by this browser.",
+        variant: "destructive",
+      });
+      setWeatherLoading(false);
+      return [];
+    }
+
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          // Define multiple locations to fetch weather for
+          const locations = [
+            { latitude, longitude, name: "Current Location" },
+            { latitude: 40.7128, longitude: -74.0060, name: "New York" },
+            { latitude: 25.7617, longitude: -80.1918, name: "Miami" },
+            { latitude: 47.6062, longitude: -122.3321, name: "Seattle" },
+            { latitude: 34.0522, longitude: -118.2437, name: "Los Angeles" },
+            { latitude: 41.8781, longitude: -87.6298, name: "Chicago" },
+          ];
+          
+          try {
+            const { data, error } = await supabase.functions.invoke('get-weather-multiple', {
+              body: { locations }
+            });
+            
+            if (error) {
+              console.error('Weather API error:', error);
+              toast({
+                title: "Weather Error",
+                description: "Failed to fetch weather data.",
+                variant: "destructive",
+              });
+              setWeatherLoading(false);
+              reject(error);
+              return;
+            }
+            
+            if (data && data.locations) {
+              // Set current weather from the first location (current location)
+              const currentLocationData = data.locations.find((loc: any) => loc.location === "Current Location");
+              if (currentLocationData && !currentLocationData.error) {
+                setCurrentWeather({
+                  ...currentLocationData.current,
+                  city: currentLocationData.current.city,
+                });
+                setForecast(currentLocationData.forecast);
+              }
+              
+              setWeatherLoading(false);
+              resolve(data.locations);
+            }
+            
+          } catch (error) {
+            console.error('Error fetching weather:', error);
+            toast({
+              title: "Weather Error",
+              description: "Failed to get weather information.",
+              variant: "destructive",
+            });
+            setWeatherLoading(false);
+            reject(error);
+          }
+        },
+        (error) => {
+          let errorMessage = "Unable to retrieve your location.";
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location access denied. Please enable location permissions.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out.";
+              break;
+          }
+          
+          toast({
+            title: "Location Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          
+          setWeatherLoading(false);
+          reject(new Error(errorMessage));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    });
+  };
+
   useEffect(() => {
     fetchWeatherData();
   }, []);
@@ -131,5 +235,6 @@ export const useWeatherData = () => {
     forecast,
     weatherLoading,
     fetchWeatherData,
+    fetchAllWeatherData,
   };
 };
