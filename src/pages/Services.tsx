@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import { useLocalServices } from "@/hooks/useLocalServices";
 
@@ -11,6 +12,8 @@ const Services = () => {
   const [searchLocation, setSearchLocation] = useState("San Francisco, CA");
   const [currentLocation, setCurrentLocation] = useState("San Francisco, CA");
   const [selectedService, setSelectedService] = useState("all");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const { toast } = useToast();
   
   const { services, loading, error, refetch } = useLocalServices({
     location: currentLocation,
@@ -20,6 +23,92 @@ const Services = () => {
   const handleSearch = () => {
     setCurrentLocation(searchLocation);
     refetch();
+  };
+
+  const getCurrentLocation = () => {
+    setLocationLoading(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Error",
+        description: "Geolocation is not supported by this browser.",
+        variant: "destructive",
+      });
+      setLocationLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Use reverse geocoding to get address
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          
+          const cityName = data.address?.city || 
+                          data.address?.town || 
+                          data.address?.village || 
+                          data.display_name?.split(',')[0] || 
+                          `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          
+          const state = data.address?.state || '';
+          const fullAddress = state ? `${cityName}, ${state}` : cityName;
+          
+          setSearchLocation(fullAddress);
+          setCurrentLocation(fullAddress);
+          
+          toast({
+            title: "Location Found!",
+            description: `Using your current location: ${fullAddress}`,
+          });
+          
+        } catch (error) {
+          // Fallback to coordinates if geocoding fails
+          const coordsLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          setSearchLocation(coordsLocation);
+          setCurrentLocation(coordsLocation);
+          
+          toast({
+            title: "Location Found!",
+            description: "Using your current coordinates.",
+          });
+        }
+        
+        setLocationLoading(false);
+      },
+      (error) => {
+        let errorMessage = "Unable to retrieve your location.";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        
+        toast({
+          title: "Location Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
   };
 
   const serviceTypes = [
@@ -66,12 +155,24 @@ const Services = () => {
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Search Location
                 </label>
-                <Input 
-                  value={searchLocation}
-                  onChange={(e) => setSearchLocation(e.target.value)}
-                  placeholder="Enter your location..."
-                  className="bg-background/50"
-                />
+                <div className="flex gap-2">
+                  <Input 
+                    value={searchLocation}
+                    onChange={(e) => setSearchLocation(e.target.value)}
+                    placeholder="Enter your location..."
+                    className="bg-background/50 flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={getCurrentLocation}
+                    disabled={locationLoading}
+                    className="px-4"
+                    title="Use current GPS location"
+                  >
+                    {locationLoading ? "📡" : "📍"}
+                  </Button>
+                </div>
               </div>
               <Button 
                 variant="premium" 
