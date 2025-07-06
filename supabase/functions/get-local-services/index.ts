@@ -44,7 +44,9 @@ serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
+    console.log('API Key exists:', !!apiKey);
     if (!apiKey) {
+      console.error('Google Places API key not found in environment');
       return new Response(
         JSON.stringify({ error: 'Google Places API key not configured' }),
         { 
@@ -105,8 +107,20 @@ serve(async (req) => {
         const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(term)}+near+${encodeURIComponent(location)}&radius=${radius}&key=${apiKey}`;
         
         try {
+          console.log(`Searching for: ${term} near ${location}`);
           const response = await fetch(searchUrl);
           const data = await response.json();
+          
+          console.log(`API Response for ${term}:`, {
+            status: data.status,
+            resultsCount: data.results?.length || 0,
+            error: data.error_message
+          });
+
+          if (data.error_message) {
+            console.error(`Google Places API Error for ${term}:`, data.error_message);
+            continue;
+          }
 
           if (data.results && data.results.length > 0) {
             const services = data.results.slice(0, 5).map((place: PlaceResult) => ({
