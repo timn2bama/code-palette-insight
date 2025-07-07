@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-wardrobe.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -25,24 +27,47 @@ const Index = () => {
                 Track your style, create perfect outfits, and never miss a sale on your favorite pieces. 
                 SyncStyle makes wardrobe management effortless and elegant.
                </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  variant="premium" 
-                  size="lg" 
-                  className="text-lg px-8 py-6"
-                  onClick={() => navigate('/wardrobe')}
-                >
-                  ✨ Start Organizing
-                </Button>
-                <Button 
-                  variant="elegant" 
-                  size="lg" 
-                  className="text-lg px-8 py-6"
-                  onClick={() => navigate('/wardrobe')}
-                >
-                  👔 View Wardrobe
-                </Button>
-              </div>
+               <div className="flex flex-col sm:flex-row gap-4">
+                 {user ? (
+                   <>
+                     <Button 
+                       variant="premium" 
+                       size="lg" 
+                       className="text-lg px-8 py-6"
+                       onClick={() => navigate('/wardrobe')}
+                     >
+                       ✨ Start Organizing
+                     </Button>
+                     <Button 
+                       variant="elegant" 
+                       size="lg" 
+                       className="text-lg px-8 py-6"
+                       onClick={() => navigate('/wardrobe')}
+                     >
+                       👔 View Wardrobe
+                     </Button>
+                   </>
+                 ) : (
+                   <>
+                     <Button 
+                       variant="premium" 
+                       size="lg" 
+                       className="text-lg px-8 py-6"
+                       onClick={() => navigate('/auth')}
+                     >
+                       ✨ Get Started
+                     </Button>
+                     <Button 
+                       variant="elegant" 
+                       size="lg" 
+                       className="text-lg px-8 py-6"
+                       onClick={() => navigate('/auth')}
+                     >
+                       🔐 Sign In
+                     </Button>
+                   </>
+                 )}
+               </div>
             </div>
             
             <div className="relative">

@@ -3,10 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const navigationItems = [
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
@@ -23,7 +25,7 @@ const Navigation = () => {
         </Link>
         
         <nav className="hidden md:flex items-center gap-4">
-          {navigationItems.map((item) => (
+          {user && navigationItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -38,6 +40,18 @@ const Navigation = () => {
               {item.name}
             </Link>
           ))}
+          
+          {user ? (
+            <Button variant="outline" size="sm" onClick={() => signOut()}>
+              Sign Out
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </nav>
 
         <Button
@@ -53,7 +67,7 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95">
           <nav className="flex flex-col gap-1 p-4">
-            {navigationItems.map((item) => (
+            {user && navigationItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -69,6 +83,26 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  signOut();
+                  setIsOpen(false);
+                }}
+                className="mt-2"
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" size="sm" className="mt-2 w-full">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </nav>
         </div>
       )}
