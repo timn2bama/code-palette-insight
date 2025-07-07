@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
 import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
+import ViewDetailsDialog from "@/components/ViewDetailsDialog";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -144,9 +145,11 @@ const Wardrobe = () => {
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    View Details
-                  </Button>
+                  <ViewDetailsDialog item={item}>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      View Details
+                    </Button>
+                  </ViewDetailsDialog>
                   <Button variant="gold" size="sm" className="flex-1">
                     Mark as Worn
                   </Button>
