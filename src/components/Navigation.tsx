@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -7,8 +7,14 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   const navigationItems = [
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
@@ -42,7 +48,7 @@ const Navigation = () => {
           ))}
           
           {user ? (
-            <Button variant="outline" size="sm" onClick={() => signOut()}>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           ) : (
@@ -89,7 +95,7 @@ const Navigation = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
-                  signOut();
+                  handleSignOut();
                   setIsOpen(false);
                 }}
                 className="mt-2"
