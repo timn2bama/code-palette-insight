@@ -25,7 +25,7 @@ const Index = () => {
               </h1>
                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                 Track your style, create perfect outfits, and never miss a sale on your favorite pieces. 
-                SyncStyle makes wardrobe management effortless and elegant.
+                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-accent"> SyncStyle</span> makes wardrobe management effortless and elegant.
                </p>
                <div className="flex flex-col sm:flex-row gap-4">
                  {user ? (
