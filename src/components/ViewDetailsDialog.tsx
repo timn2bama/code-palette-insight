@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import AddToOutfitDialog from "./AddToOutfitDialog";
+import OutfitSuggestionsDialog from "./OutfitSuggestionsDialog";
 
 interface ClothingItem {
   id: string;
@@ -18,7 +20,7 @@ interface ClothingItem {
   lastWorn: string;
   color: string | null;
   brand: string | null;
-  photo_url?: string | null;
+  photo_url: string | null;
 }
 
 interface ViewDetailsDialogProps {
@@ -258,12 +260,16 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
                 Mark as Worn Today
               </Button>
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" disabled>
-                  Add to Outfit
-                </Button>
-                <Button variant="outline" disabled>
-                  Edit Details
-                </Button>
+                <AddToOutfitDialog item={item}>
+                  <Button variant="outline">
+                    Add to Outfit
+                  </Button>
+                </AddToOutfitDialog>
+                <OutfitSuggestionsDialog baseItem={item} onOutfitCreated={onItemUpdated}>
+                  <Button variant="outline">
+                    Smart Suggestions
+                  </Button>
+                </OutfitSuggestionsDialog>
               </div>
             </div>
           </div>
