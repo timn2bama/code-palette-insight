@@ -183,16 +183,36 @@ const Wardrobe = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
             <Card key={item.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{item.brand}</p>
+              <CardContent className="p-0">
+                {/* Photo Section */}
+                {item.photo_url ? (
+                  <div className="aspect-square overflow-hidden rounded-t-lg">
+                    <img 
+                      src={item.photo_url} 
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                  <Badge variant="secondary">{item.color}</Badge>
-                </div>
+                ) : (
+                  <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <div className="text-4xl mb-2">👕</div>
+                      <p className="text-sm">No photo</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Content Section */}
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{item.brand}</p>
+                    </div>
+                    <Badge variant="secondary">{item.color}</Badge>
+                  </div>
 
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
@@ -208,18 +228,19 @@ const Wardrobe = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <ViewDetailsDialog item={item}>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      View Details
-                    </Button>
-                  </ViewDetailsDialog>
-                  <Button variant="gold" size="sm" className="flex-1">
-                    Mark as Worn
-                  </Button>
+                 <div className="flex gap-2 mt-4">
+                   <ViewDetailsDialog item={item}>
+                     <Button variant="outline" size="sm" className="flex-1">
+                       View Details
+                     </Button>
+                   </ViewDetailsDialog>
+                   <Button variant="gold" size="sm" className="flex-1">
+                     Mark as Worn
+                   </Button>
+                 </div>
                 </div>
-              </CardContent>
-            </Card>
+               </CardContent>
+             </Card>
             ))}
           </div>
         )}
