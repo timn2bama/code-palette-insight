@@ -84,12 +84,13 @@ const Index = () => {
 
       {/* Features Grid */}
       <div className="container mx-auto px-4 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
           <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
             <CardContent className="p-6 text-center">
               <div className="text-4xl mb-4">👔</div>
-              <h3 className="font-semibold text-primary mb-2">Smart Tracking</h3>
-              <p className="text-sm text-muted-foreground">Monitor your most-worn pieces and wardrobe analytics</p>
+              <h3 className="font-semibold text-primary mb-2">Smart Wardrobe</h3>
+              <p className="text-sm text-muted-foreground">Track your clothing collection with analytics and smart insights</p>
             </CardContent>
           </Card>
           
@@ -106,14 +107,6 @@ const Index = () => {
               <div className="text-4xl mb-4">🌤️</div>
               <h3 className="font-semibold text-primary mb-2">Weather Sync</h3>
               <p className="text-sm text-muted-foreground">Get outfit suggestions based on local weather</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
-            <CardContent className="p-6 text-center">
-              <div className="text-4xl mb-4">🔧</div>
-              <h3 className="font-semibold text-primary mb-2">Local Services</h3>
-              <p className="text-sm text-muted-foreground">Find trusted cleaners and tailors nearby</p>
             </CardContent>
           </Card>
         </div>
