@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ChevronRight, Upload, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ClothingItem {
   id: string;
@@ -21,10 +24,14 @@ interface ClothingItem {
 interface ViewDetailsDialogProps {
   item: ClothingItem;
   children: React.ReactNode;
+  onItemUpdated?: () => void;
 }
 
-const ViewDetailsDialog = ({ item, children }: ViewDetailsDialogProps) => {
+const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
   // Use the uploaded photo if available, otherwise show placeholder
   const photos = item.photo_url ? [item.photo_url] : [
@@ -41,6 +48,42 @@ const ViewDetailsDialog = ({ item, children }: ViewDetailsDialogProps) => {
 
   const goToPhoto = (index: number) => {
     setCurrentPhotoIndex(index);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${item.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('wardrobe-photos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('wardrobe-photos')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('wardrobe_items')
+        .update({ photo_url: publicUrl })
+        .eq('id', item.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Photo uploaded successfully!');
+      onItemUpdated?.();
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -124,9 +167,21 @@ const ViewDetailsDialog = ({ item, children }: ViewDetailsDialogProps) => {
             )}
 
             {/* Upload New Photo Button */}
-            <Button variant="outline" className="w-full" disabled>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
               <Upload className="h-4 w-4 mr-2" />
-              Add Photo (Coming Soon)
+              {uploading ? 'Uploading...' : 'Add Photo'}
             </Button>
           </div>
 

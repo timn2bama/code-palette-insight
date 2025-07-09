@@ -229,7 +229,7 @@ const Wardrobe = () => {
                 </div>
 
                  <div className="flex gap-2 mt-4">
-                   <ViewDetailsDialog item={item}>
+                   <ViewDetailsDialog item={item} onItemUpdated={fetchWardrobeItems}>
                      <Button variant="outline" size="sm" className="flex-1">
                        View Details
                      </Button>
