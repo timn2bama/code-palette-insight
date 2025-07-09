@@ -86,7 +86,10 @@ const Index = () => {
       <div className="container mx-auto px-4 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+          <Card 
+            className="shadow-card hover:shadow-elegant transition-all duration-300 cursor-pointer"
+            onClick={() => navigate('/wardrobe')}
+          >
             <CardContent className="p-6 text-center">
               <div className="text-4xl mb-4">👔</div>
               <h3 className="font-semibold text-primary mb-2">Smart Wardrobe</h3>
