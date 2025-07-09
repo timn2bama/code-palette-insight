@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,26 +6,68 @@ import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
 import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
 import ViewDetailsDialog from "@/components/ViewDetailsDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [clothingItems, setClothingItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
+  useEffect(() => {
+    if (user) {
+      fetchWardrobeItems();
+    }
+  }, [user]);
+
+  const fetchWardrobeItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wardrobe_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data to match expected format
+      const transformedItems = data.map(item => ({
+        ...item,
+        wearCount: item.wear_count || 0,
+        lastWorn: item.last_worn ? formatDate(item.last_worn) : 'Never'
+      }));
+
+      setClothingItems(transformedItems);
+    } catch (error) {
+      console.error('Error fetching wardrobe items:', error);
+      toast.error('Failed to load wardrobe items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
+  // Calculate categories dynamically
   const categories = [
-    { id: "all", name: "All Items", count: 47 },
-    { id: "tops", name: "Tops", count: 15 },
-    { id: "bottoms", name: "Bottoms", count: 12 },
-    { id: "dresses", name: "Dresses", count: 8 },
-    { id: "outerwear", name: "Outerwear", count: 7 },
-    { id: "shoes", name: "Shoes", count: 5 },
-  ];
-
-  const clothingItems = [
-    { id: 1, name: "Black Blazer", category: "outerwear", wearCount: 24, lastWorn: "2 days ago", color: "Black", brand: "Zara" },
-    { id: 2, name: "White Button Shirt", category: "tops", wearCount: 18, lastWorn: "1 week ago", color: "White", brand: "Uniqlo" },
-    { id: 3, name: "Dark Jeans", category: "bottoms", wearCount: 32, lastWorn: "Yesterday", color: "Navy", brand: "Levi's" },
-    { id: 4, name: "Floral Summer Dress", category: "dresses", wearCount: 6, lastWorn: "2 weeks ago", color: "Multi", brand: "H&M" },
-    { id: 5, name: "Leather Boots", category: "shoes", wearCount: 21, lastWorn: "3 days ago", color: "Brown", brand: "Dr. Martens" },
-    { id: 6, name: "Cashmere Sweater", category: "tops", wearCount: 15, lastWorn: "1 week ago", color: "Gray", brand: "Everlane" },
+    { id: "all", name: "All Items", count: clothingItems.length },
+    { id: "tops", name: "Tops", count: clothingItems.filter(item => item.category === 'tops').length },
+    { id: "bottoms", name: "Bottoms", count: clothingItems.filter(item => item.category === 'bottoms').length },
+    { id: "dresses", name: "Dresses", count: clothingItems.filter(item => item.category === 'dresses').length },
+    { id: "outerwear", name: "Outerwear", count: clothingItems.filter(item => item.category === 'outerwear').length },
+    { id: "shoes", name: "Shoes", count: clothingItems.filter(item => item.category === 'shoes').length },
   ];
 
   const filteredItems = selectedCategory === "all" 
@@ -45,37 +87,45 @@ const Wardrobe = () => {
         </div>
 
         {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Most Worn This Month</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">Dark Jeans</div>
-              <p className="text-sm text-muted-foreground">32 times</p>
-            </CardContent>
-          </Card>
+        {!loading && clothingItems.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Most Worn This Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  {mostWornItems[0]?.name || 'No items'}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {mostWornItems[0]?.wearCount || 0} times
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">47</div>
-              <p className="text-sm text-muted-foreground">Across 6 categories</p>
-            </CardContent>
-          </Card>
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">{clothingItems.length}</div>
+                <p className="text-sm text-muted-foreground">
+                  Across {categories.filter(c => c.id !== 'all' && c.count > 0).length} categories
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Wardrobe Value</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">$2,847</div>
-              <p className="text-sm text-muted-foreground">Estimated total</p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Wardrobe Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">$--</div>
+                <p className="text-sm text-muted-foreground">Coming soon</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Most Worn Items */}
         <Card className="shadow-card mb-8">
@@ -116,8 +166,22 @@ const Wardrobe = () => {
         </div>
 
         {/* Clothing Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading your wardrobe...</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {selectedCategory === 'all' 
+                ? "No items in your wardrobe yet. Add your first item!" 
+                : `No items in the ${selectedCategory} category.`
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => (
             <Card key={item.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
@@ -156,15 +220,13 @@ const Wardrobe = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Add Item Button */}
         <div className="text-center mt-8">
-          <AddWardrobeItemDialog onItemAdded={() => {
-            // Refresh the page or reload data when item is added
-            window.location.reload();
-          }} />
+          <AddWardrobeItemDialog onItemAdded={fetchWardrobeItems} />
         </div>
       </div>
     </div>

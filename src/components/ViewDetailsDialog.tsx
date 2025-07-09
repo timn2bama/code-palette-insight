@@ -8,14 +8,14 @@ import { ChevronLeft, ChevronRight, Upload, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ClothingItem {
-  id: number;
+  id: string;
   name: string;
   category: string;
   wearCount: number;
   lastWorn: string;
-  color: string;
-  brand: string;
-  photo_url?: string;
+  color: string | null;
+  brand: string | null;
+  photo_url?: string | null;
 }
 
 interface ViewDetailsDialogProps {
@@ -26,11 +26,9 @@ interface ViewDetailsDialogProps {
 const ViewDetailsDialog = ({ item, children }: ViewDetailsDialogProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
-  // For now, we'll use the single photo_url, but structure it for multiple photos
+  // Use the uploaded photo if available, otherwise show placeholder
   const photos = item.photo_url ? [item.photo_url] : [
-    `https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop`,
-    `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop`,
-    `https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400&h=600&fit=crop`
+    `https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop`
   ];
 
   const nextPhoto = () => {
@@ -139,13 +137,13 @@ const ViewDetailsDialog = ({ item, children }: ViewDetailsDialogProps) => {
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-lg">{item.name}</h3>
-                  <Badge variant="secondary">{item.color}</Badge>
+                  {item.color && <Badge variant="secondary">{item.color}</Badge>}
                 </div>
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Brand</span>
-                    <span className="font-medium">{item.brand}</span>
+                    <span className="font-medium">{item.brand || 'Not specified'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Category</span>
