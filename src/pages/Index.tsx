@@ -97,7 +97,10 @@ const Index = () => {
             </CardContent>
           </Card>
           
-          <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+          <Card 
+            className="shadow-card hover:shadow-elegant transition-all duration-300 cursor-pointer"
+            onClick={() => navigate('/outfits')}
+          >
             <CardContent className="p-6 text-center">
               <div className="text-4xl mb-4">✨</div>
               <h3 className="font-semibold text-primary mb-2">Outfit Creator</h3>
