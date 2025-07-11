@@ -21,6 +21,7 @@ const Navigation = () => {
     { name: "Outfits", path: "/outfits", icon: "✨" },
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
+    { name: "Subscription", path: "/subscription", icon: "💎" },
   ];
 
   return (

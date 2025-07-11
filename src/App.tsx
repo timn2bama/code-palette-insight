@@ -11,6 +11,7 @@ import Outfits from "./pages/Outfits";
 import Weather from "./pages/Weather";
 import Services from "./pages/Services";
 import Auth from "./pages/Auth";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/outfits" element={<ProtectedRoute><Outfits /></ProtectedRoute>} />
             <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+            <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

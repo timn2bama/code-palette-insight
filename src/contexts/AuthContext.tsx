@@ -2,10 +2,18 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface SubscriptionStatus {
+  subscribed: boolean;
+  subscription_tier?: string;
+  subscription_end?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  subscriptionStatus: SubscriptionStatus;
+  checkSubscription: () => Promise<void>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -25,6 +33,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({ subscribed: false });
+
+  const checkSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      setSubscriptionStatus(data);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -33,6 +54,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Check subscription status when user changes
+        if (session?.user) {
+          setTimeout(() => {
+            checkSubscription();
+          }, 0);
+        } else {
+          setSubscriptionStatus({ subscribed: false });
+        }
       }
     );
 
@@ -41,6 +71,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Check subscription status for existing session
+      if (session?.user) {
+        setTimeout(() => {
+          checkSubscription();
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -79,6 +116,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     session,
     loading,
+    subscriptionStatus,
+    checkSubscription,
     signUp,
     signIn,
     signOut

@@ -1,0 +1,283 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { CreditCard, Check, X, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
+interface SubscriptionStatus {
+  subscribed: boolean;
+  subscription_tier?: string;
+  subscription_end?: string;
+}
+
+export default function Subscription() {
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({ subscribed: false });
+  const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const checkSubscriptionStatus = async () => {
+    if (!user) return;
+    
+    setCheckingStatus(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      setSubscriptionStatus(data);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check subscription status",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  const handleSubscribe = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout');
+      if (error) throw error;
+      
+      // Open Stripe checkout in a new tab
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create checkout session",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      
+      // Open Stripe customer portal in a new tab
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open customer portal",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    checkSubscriptionStatus();
+  }, [user, navigate]);
+
+  useEffect(() => {
+    // Auto-refresh subscription status every 10 seconds
+    const interval = setInterval(checkSubscriptionStatus, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    // Check for success/cancel parameters from Stripe redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      toast({
+        title: "Success!",
+        description: "Your subscription has been activated.",
+      });
+      checkSubscriptionStatus();
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('canceled') === 'true') {
+      toast({
+        title: "Canceled",
+        description: "Subscription setup was canceled.",
+        variant: "destructive",
+      });
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Subscription</h1>
+        <p className="text-muted-foreground">
+          Upgrade to Premium for unlimited wardrobe items and advanced features
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Current Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Current Status
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={checkSubscriptionStatus}
+                disabled={checkingStatus}
+              >
+                <RefreshCw className={`h-4 w-4 ${checkingStatus ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Plan:</span>
+                <Badge variant={subscriptionStatus.subscribed ? "default" : "secondary"}>
+                  {subscriptionStatus.subscribed ? subscriptionStatus.subscription_tier || "Premium" : "Free"}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Status:</span>
+                <div className="flex items-center gap-2">
+                  {subscriptionStatus.subscribed ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span className="text-green-600">Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <X className="h-4 w-4 text-gray-500" />
+                      <span className="text-muted-foreground">Inactive</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {subscriptionStatus.subscribed && subscriptionStatus.subscription_end && (
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Next billing:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(subscriptionStatus.subscription_end).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          {subscriptionStatus.subscribed && (
+            <CardFooter>
+              <Button 
+                variant="outline" 
+                onClick={handleManageSubscription}
+                disabled={loading}
+                className="w-full"
+              >
+                Manage Subscription
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
+
+        {/* Premium Plan */}
+        <Card className={subscriptionStatus.subscribed ? "border-primary" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Premium Plan
+              {subscriptionStatus.subscribed && (
+                <Badge>Current Plan</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Unlock the full potential of your wardrobe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-3xl font-bold">
+                $4<span className="text-base font-normal text-muted-foreground">/month</span>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Unlimited wardrobe items</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Advanced outfit suggestions</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Weather-based recommendations</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Priority customer support</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Export wardrobe data</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          {!subscriptionStatus.subscribed && (
+            <CardFooter>
+              <Button 
+                onClick={handleSubscribe} 
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? "Processing..." : "Subscribe Now"}
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+
+      {/* Debug Panel */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="text-lg">Debug Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <div><strong>User ID:</strong> {user.id}</div>
+            <div><strong>Email:</strong> {user.email}</div>
+            <div><strong>Subscribed:</strong> {subscriptionStatus.subscribed ? 'Yes' : 'No'}</div>
+            <div><strong>Tier:</strong> {subscriptionStatus.subscription_tier || 'None'}</div>
+            <div><strong>End Date:</strong> {subscriptionStatus.subscription_end || 'None'}</div>
+            <div><strong>Last Check:</strong> {new Date().toLocaleTimeString()}</div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
