@@ -131,6 +131,15 @@ const Index = () => {
           </Card>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-muted/50 py-8 mt-16">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-muted-foreground">
+            Need help? Contact our customer service: <a href="mailto:sysncstyleonline@gmail.com" className="text-primary hover:underline">sysncstyleonline@gmail.com</a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
