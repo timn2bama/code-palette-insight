@@ -88,7 +88,7 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md mx-4 sm:mx-0">
         <DialogHeader>
           <DialogTitle>Create New Outfit</DialogTitle>
         </DialogHeader>
@@ -116,7 +116,7 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Occasion</Label>
               <Select value={formData.occasion} onValueChange={(value) => setFormData(prev => ({ ...prev, occasion: value }))}>
@@ -158,7 +158,7 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>

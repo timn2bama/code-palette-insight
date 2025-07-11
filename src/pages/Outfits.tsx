@@ -159,7 +159,7 @@ const Outfits = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -267,10 +267,10 @@ const Outfits = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredOutfits.map((outfit) => (
               <Card key={outfit.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
@@ -370,7 +370,7 @@ const Outfits = () => {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button variant="outline" size="sm" className="flex-1" disabled>
                       <Eye className="h-4 w-4 mr-2" />
                       View

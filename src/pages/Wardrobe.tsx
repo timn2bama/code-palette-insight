@@ -151,7 +151,7 @@ const Wardrobe = () => {
         </Card>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start">
           {categories.map((category) => (
             <Button
               key={category.id}
@@ -180,7 +180,7 @@ const Wardrobe = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredItems.map((item) => (
             <Card key={item.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
               <CardContent className="p-0">
@@ -202,8 +202,8 @@ const Wardrobe = () => {
                   </div>
                 )}
                 
-                {/* Content Section */}
-                <div className="p-6">
+                 {/* Content Section */}
+                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
@@ -214,21 +214,21 @@ const Wardrobe = () => {
                     <Badge variant="secondary">{item.color}</Badge>
                   </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Wear Count</span>
-                    <span className="font-medium">{item.wearCount}</span>
-                  </div>
-                  
-                  <Progress value={(item.wearCount / 35) * 100} className="h-2" />
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Last Worn</span>
-                    <span className="font-medium">{item.lastWorn}</span>
-                  </div>
-                </div>
+                 <div className="space-y-3">
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Wear Count</span>
+                     <span className="font-medium">{item.wearCount}</span>
+                   </div>
+                   
+                   <Progress value={(item.wearCount / 35) * 100} className="h-2" />
+                   
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Last Worn</span>
+                     <span className="font-medium">{item.lastWorn}</span>
+                   </div>
+                 </div>
 
-                 <div className="flex gap-2 mt-4">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
                    <ViewDetailsDialog item={item} onItemUpdated={fetchWardrobeItems}>
                      <Button variant="outline" size="sm" className="flex-1">
                        View Details

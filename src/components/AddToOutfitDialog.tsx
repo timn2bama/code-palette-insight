@@ -130,7 +130,7 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[80vh] mx-4 sm:mx-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle>Add "{item.name}" to Outfit</DialogTitle>
         </DialogHeader>
@@ -177,50 +177,50 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
             ) : (
               filteredOutfits.map((outfit) => (
                 <Card key={outfit.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{outfit.name}</h3>
-                        {outfit.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {outfit.description}
-                          </p>
-                        )}
-                        <div className="flex gap-2 mt-2">
-                          {outfit.occasion && (
-                            <Badge variant="secondary" className="text-xs">
-                              {outfit.occasion}
-                            </Badge>
-                          )}
-                          {outfit.season && (
-                            <Badge variant="outline" className="text-xs">
-                              {outfit.season}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {outfit.outfit_items.length} item{outfit.outfit_items.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      
-                      <div className="ml-4">
-                        {isItemInOutfit(outfit) ? (
-                          <Button variant="outline" disabled className="gap-2">
-                            <Check className="h-4 w-4" />
-                            Added
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="gold"
-                            size="sm"
-                            onClick={() => addToOutfit(outfit.id)}
-                            disabled={addingToOutfit === outfit.id}
-                            className="gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            {addingToOutfit === outfit.id ? 'Adding...' : 'Add'}
-                          </Button>
-                        )}
+                   <CardContent className="p-4">
+                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                       <div className="flex-1">
+                         <h3 className="font-semibold">{outfit.name}</h3>
+                         {outfit.description && (
+                           <p className="text-sm text-muted-foreground mt-1">
+                             {outfit.description}
+                           </p>
+                         )}
+                         <div className="flex gap-2 mt-2">
+                           {outfit.occasion && (
+                             <Badge variant="secondary" className="text-xs">
+                               {outfit.occasion}
+                             </Badge>
+                           )}
+                           {outfit.season && (
+                             <Badge variant="outline" className="text-xs">
+                               {outfit.season}
+                             </Badge>
+                           )}
+                         </div>
+                         <p className="text-xs text-muted-foreground mt-2">
+                           {outfit.outfit_items.length} item{outfit.outfit_items.length !== 1 ? 's' : ''}
+                         </p>
+                       </div>
+                       
+                       <div className="sm:ml-4 w-full sm:w-auto">
+                         {isItemInOutfit(outfit) ? (
+                           <Button variant="outline" disabled className="gap-2 w-full sm:w-auto">
+                             <Check className="h-4 w-4" />
+                             Added
+                           </Button>
+                         ) : (
+                           <Button
+                             variant="gold"
+                             size="sm"
+                             onClick={() => addToOutfit(outfit.id)}
+                             disabled={addingToOutfit === outfit.id}
+                             className="gap-2 w-full sm:w-auto"
+                           >
+                             <Plus className="h-4 w-4" />
+                             {addingToOutfit === outfit.id ? 'Adding...' : 'Add'}
+                           </Button>
+                         )}
                       </div>
                     </div>
                   </CardContent>

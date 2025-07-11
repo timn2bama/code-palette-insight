@@ -93,7 +93,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] mx-4 sm:mx-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5 text-primary" />
@@ -101,7 +101,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[80vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 overflow-y-auto max-h-[80vh]">
           {/* Photo Gallery */}
           <div className="space-y-4">
             {/* Main Photo Display */}
@@ -191,7 +191,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
           <div className="space-y-6">
             {/* Basic Info */}
             <Card>
-              <CardContent className="p-4 space-y-3">
+               <CardContent className="p-3 sm:p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-lg">{item.name}</h3>
                   {item.color && <Badge variant="secondary">{item.color}</Badge>}
@@ -212,7 +212,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
 
             {/* Wear Statistics */}
             <Card>
-              <CardContent className="p-4 space-y-3">
+               <CardContent className="p-3 sm:p-4 space-y-3">
                 <h4 className="font-semibold flex items-center gap-2">
                   <span className="text-fashion-gold">📊</span>
                   Wear Statistics
@@ -239,7 +239,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
 
             {/* Care Instructions */}
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-3 sm:p-4 space-y-3">
                 <h4 className="font-semibold flex items-center gap-2">
                   <span className="text-fashion-gold">🧺</span>
                   Care Instructions
@@ -259,7 +259,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
               <Button className="w-full" variant="elegant">
                 Mark as Worn Today
               </Button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <AddToOutfitDialog item={item}>
                   <Button variant="outline">
                     Add to Outfit
