@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Upload, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { validateTextInput, validateImageFile, validateImageDimensions, getSafeErrorMessage, rateLimiter } from "@/lib/security";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 interface AddWardrobeItemDialogProps {
   onItemAdded: () => void;
@@ -18,6 +20,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  const { logEvent } = useAuditLog();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -30,16 +33,38 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     "tops", "bottoms", "dresses", "outerwear", "shoes", "accessories"
   ];
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file
+    const fileValidation = validateImageFile(file);
+    if (!fileValidation.isValid) {
+      toast({
+        title: "Invalid file",
+        description: fileValidation.error,
+        variant: "destructive",
+      });
+      return;
     }
+
+    // Validate dimensions
+    const dimensionValidation = await validateImageDimensions(file);
+    if (!dimensionValidation.isValid) {
+      toast({
+        title: "Image too large",
+        description: dimensionValidation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreviewUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,11 +72,54 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     setLoading(true);
 
     try {
+      // Rate limiting check
+      if (!rateLimiter.isAllowed('wardrobe-item-creation', 10, 60000)) {
+        toast({
+          title: "Too many requests",
+          description: "Please wait a moment before adding another item.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Authentication required",
           description: "Please log in to add items to your wardrobe.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate and sanitize inputs
+      const nameValidation = validateTextInput(formData.name, 'name');
+      const colorValidation = validateTextInput(formData.color, 'color');
+      const brandValidation = validateTextInput(formData.brand, 'brand');
+
+      if (!nameValidation.isValid) {
+        toast({
+          title: "Invalid name",
+          description: nameValidation.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!colorValidation.isValid) {
+        toast({
+          title: "Invalid color",
+          description: colorValidation.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!brandValidation.isValid) {
+        toast({
+          title: "Invalid brand",
+          description: brandValidation.error,
           variant: "destructive",
         });
         return;
@@ -79,14 +147,14 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         photoUrl = publicUrl;
       }
 
-      // Insert wardrobe item
+      // Insert wardrobe item with sanitized data
       const { error: insertError } = await supabase
         .from('wardrobe_items')
         .insert({
-          name: formData.name,
+          name: nameValidation.sanitized,
           category: formData.category,
-          color: formData.color || null,
-          brand: formData.brand || null,
+          color: colorValidation.sanitized || null,
+          brand: brandValidation.sanitized || null,
           photo_url: photoUrl,
           user_id: user.id,
         });
@@ -94,6 +162,16 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       if (insertError) {
         throw insertError;
       }
+
+      // Log the creation for audit purposes
+      await logEvent({
+        event_type: 'wardrobe_item_created',
+        details: {
+          item_name: nameValidation.sanitized,
+          category: formData.category,
+          has_photo: !!photoUrl
+        }
+      });
 
       toast({
         title: "Success!",
@@ -111,7 +189,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       console.error('Error adding item:', error);
       toast({
         title: "Error",
-        description: "Failed to add item to wardrobe. Please try again.",
+        description: getSafeErrorMessage(error),
         variant: "destructive",
       });
     } finally {

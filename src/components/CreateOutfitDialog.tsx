@@ -9,6 +9,8 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { validateTextInput, getSafeErrorMessage, rateLimiter } from "@/lib/security";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 interface CreateOutfitDialogProps {
   onOutfitCreated?: () => void;
@@ -33,19 +35,39 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
     season: ""
   });
   const { user } = useAuth();
+  const { logEvent } = useAuditLog();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !formData.name.trim()) return;
 
+    // Rate limiting check
+    if (!rateLimiter.isAllowed('outfit-creation', 20, 60000)) {
+      toast.error('Too many requests. Please wait a moment before creating another outfit.');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Validate and sanitize inputs
+      const nameValidation = validateTextInput(formData.name, 'name');
+      const descriptionValidation = validateTextInput(formData.description, 'description');
+
+      if (!nameValidation.isValid) {
+        toast.error(nameValidation.error || 'Invalid outfit name');
+        return;
+      }
+
+      if (!descriptionValidation.isValid) {
+        toast.error(descriptionValidation.error || 'Invalid description');
+        return;
+      }
       const { data: outfit, error: outfitError } = await supabase
         .from('outfits')
         .insert({
           user_id: user.id,
-          name: formData.name.trim(),
-          description: formData.description.trim() || null,
+          name: nameValidation.sanitized,
+          description: descriptionValidation.sanitized || null,
           occasion: formData.occasion || null,
           season: formData.season || null
         })
@@ -66,13 +88,24 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
         if (itemError) throw itemError;
       }
 
+      // Log the creation for audit purposes
+      await logEvent({
+        event_type: 'outfit_created',
+        details: {
+          outfit_name: nameValidation.sanitized,
+          occasion: formData.occasion,
+          season: formData.season,
+          has_initial_item: !!initialItem
+        }
+      });
+
       toast.success(`Outfit "${formData.name}" created successfully!`);
       setFormData({ name: "", description: "", occasion: "", season: "" });
       setOpen(false);
       onOutfitCreated?.();
     } catch (error) {
       console.error('Error creating outfit:', error);
-      toast.error('Failed to create outfit');
+      toast.error(getSafeErrorMessage(error));
     } finally {
       setLoading(false);
     }

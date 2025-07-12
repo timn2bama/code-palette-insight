@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { SecurityStatus } from "@/components/SecurityStatus";
 
 const Navigation = () => {
   const location = useLocation();
@@ -52,6 +53,8 @@ const Navigation = () => {
         <Link to="/" className="text-lg font-bold text-primary hover:text-accent transition-colors">
           SyncStyle
         </Link>
+        
+        <SecurityStatus />
         
         <nav className="hidden md:flex items-center gap-4">
           {user && navigationItems.map((item) => (

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { validateEmail, getSafeErrorMessage, rateLimiter } from '@/lib/security';
 
 interface SubscriptionStatus {
   subscribed: boolean;
@@ -84,27 +85,72 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          display_name: displayName
+    // Rate limiting
+    if (!rateLimiter.isAllowed('signup', 3, 300000)) { // 3 attempts per 5 minutes
+      return { error: new Error('Too many signup attempts. Please wait before trying again.') };
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return { error: new Error(emailValidation.error || 'Invalid email') };
+    }
+
+    // Password strength check
+    if (password.length < 8) {
+      return { error: new Error('Password must be at least 8 characters long') };
+    }
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            display_name: displayName?.trim()
+          }
         }
-      }
-    });
-    return { error };
+      });
+      
+      return { error: error ? new Error(getSafeErrorMessage(error)) : null };
+    } catch (error) {
+      return { error: new Error(getSafeErrorMessage(error)) };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+    // Rate limiting for failed login attempts
+    const loginKey = `login-${email.toLowerCase()}`;
+    if (!rateLimiter.isAllowed(loginKey, 5, 300000)) { // 5 attempts per 5 minutes
+      return { error: new Error('Too many login attempts. Please wait before trying again.') };
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return { error: new Error(emailValidation.error || 'Invalid email') };
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password
+      });
+      
+      if (error) {
+        // Don't reset rate limiter on failed login
+        return { error: new Error(getSafeErrorMessage(error)) };
+      } else {
+        // Reset rate limiter on successful login
+        rateLimiter.reset(loginKey);
+        return { error: null };
+      }
+    } catch (error) {
+      return { error: new Error(getSafeErrorMessage(error)) };
+    }
   };
 
   const signOut = async () => {

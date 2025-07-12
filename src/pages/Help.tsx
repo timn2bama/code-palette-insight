@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Navigation from "@/components/Navigation";
-import { Search, HelpCircle, BookOpen, Settings, Smartphone } from "lucide-react";
+import { Search, HelpCircle, BookOpen, Settings, Smartphone, Shield } from "lucide-react";
+import { PrivacyControls } from "@/components/PrivacyControls";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Help = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
 
   const faqCategories = [
     {
@@ -160,6 +163,13 @@ const Help = () => {
               </Card>
             ))}
           </div>
+
+          {/* Privacy & Data Controls */}
+          {user && (
+            <div className="mt-8">
+              <PrivacyControls />
+            </div>
+          )}
 
           {/* Contact Support */}
           <Card className="shadow-card mt-8 bg-secondary/20">

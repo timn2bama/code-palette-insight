@@ -12,7 +12,47 @@ serve(async (req) => {
   }
 
   try {
-    const { latitude, longitude } = await req.json();
+    // Rate limiting check
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const rateLimitKey = `weather-${clientIP}`;
+    
+    // Simple in-memory rate limiting (in production, use Redis or similar)
+    const now = Date.now();
+    const requests = globalThis.weatherRequests || new Map();
+    const userRequests = requests.get(rateLimitKey) || [];
+    
+    // Remove requests older than 1 minute
+    const recentRequests = userRequests.filter((time: number) => now - time < 60000);
+    
+    if (recentRequests.length >= 10) { // 10 requests per minute
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    recentRequests.push(now);
+    requests.set(rateLimitKey, recentRequests);
+    globalThis.weatherRequests = requests;
+
+    const body = await req.json();
+    const { latitude, longitude } = body;
+
+    // Input validation
+    if (!latitude || !longitude || 
+        typeof latitude !== 'number' || typeof longitude !== 'number' ||
+        latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid coordinates provided' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
     const apiKey = Deno.env.get('WEATHERAPI_KEY');
     
     if (!apiKey) {
@@ -85,8 +125,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in get-weather function:', error);
+    
+    // Don't expose internal errors to clients
+    let errorMessage = 'Unable to fetch weather data at this time';
+    if (error.message && error.message.includes('API')) {
+      errorMessage = 'Weather service temporarily unavailable';
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
