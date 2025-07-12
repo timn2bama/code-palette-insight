@@ -45,16 +45,50 @@ const Services = () => {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
           );
-          const data = await response.json();
           
+          if (!response.ok) {
+            throw new Error(`Geocoding failed: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('Geocoding response:', data); // Debug log
+          
+          // Extract location components with better fallbacks
           const cityName = data.address?.city || 
                           data.address?.town || 
-                          data.address?.village || 
-                          data.display_name?.split(',')[0] || 
-                          `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                          data.address?.village ||
+                          data.address?.suburb ||
+                          data.address?.county ||
+                          data.address?.municipality ||
+                          data.name ||
+                          null;
           
-          const state = data.address?.state || '';
-          const fullAddress = state ? `${cityName}, ${state}` : cityName;
+          const state = data.address?.state || 
+                       data.address?.state_code ||
+                       data.address?.region ||
+                       null;
+          
+          const country = data.address?.country_code?.toUpperCase() || '';
+          
+          // Build location string with available components
+          let fullAddress = '';
+          if (cityName && state) {
+            fullAddress = `${cityName}, ${state}`;
+          } else if (cityName) {
+            fullAddress = cityName;
+          } else if (state) {
+            fullAddress = state;
+          } else {
+            // Parse from display_name as last resort
+            const displayParts = data.display_name?.split(',') || [];
+            if (displayParts.length >= 2) {
+              fullAddress = `${displayParts[0].trim()}, ${displayParts[1].trim()}`;
+            } else if (displayParts.length === 1) {
+              fullAddress = displayParts[0].trim();
+            } else {
+              throw new Error('Unable to parse location name');
+            }
+          }
           
           setSearchLocation(fullAddress);
           setCurrentLocation(fullAddress);
@@ -65,6 +99,7 @@ const Services = () => {
           });
           
         } catch (error) {
+          console.error('Geocoding error:', error);
           // Fallback to coordinates if geocoding fails
           const coordsLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           setSearchLocation(coordsLocation);
@@ -72,7 +107,8 @@ const Services = () => {
           
           toast({
             title: "Location Found!",
-            description: "Using your current coordinates.",
+            description: "Using your current coordinates (geocoding unavailable).",
+            variant: "destructive",
           });
         }
         
