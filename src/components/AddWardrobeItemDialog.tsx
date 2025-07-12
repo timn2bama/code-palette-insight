@@ -40,37 +40,41 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       const img = new window.Image();
       
       img.onload = () => {
-        // More aggressive compression for phone cameras
-        // Max 1200px for better compression
-        const maxSize = 1200;
+        console.log('Original image dimensions:', img.width, 'x', img.height);
+        
+        // Very aggressive compression for phone cameras
+        // Max 800px to ensure it stays under limits
+        const maxSize = 800;
         let { width, height } = img;
         
-        if (width > height) {
-          if (width > maxSize) {
+        // Always resize if either dimension is over maxSize
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
             height = (height * maxSize) / width;
             width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
+          } else {
             width = (width * maxSize) / height;
             height = maxSize;
           }
         }
         
+        console.log('Compressed image dimensions:', width, 'x', height);
+        
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress with lower quality for smaller files
+        // Draw and compress with much lower quality for smaller files
         ctx?.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (blob) {
+            console.log('Blob size after compression:', blob.size, 'bytes');
             const compressedFile = new File([blob], file.name, {
               type: 'image/jpeg',
               lastModified: Date.now(),
             });
             resolve(compressedFile);
           }
-        }, 'image/jpeg', 0.7); // Lower quality for smaller file size
+        }, 'image/jpeg', 0.5); // Much lower quality for smaller file size
       };
       
       img.src = URL.createObjectURL(file);
