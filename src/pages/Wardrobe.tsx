@@ -6,9 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
 import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
 import ViewDetailsDialog from "@/components/ViewDetailsDialog";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Shirt, Plus } from "lucide-react";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -187,18 +190,39 @@ const Wardrobe = () => {
 
         {/* Clothing Grid */}
         {loading ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Loading your wardrobe...</p>
+          <div className="text-center py-16">
+            <LoadingSpinner size="lg" />
+            <p className="text-muted-foreground mt-4 text-lg">Loading your wardrobe...</p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              {selectedCategory === 'all' 
-                ? "No items in your wardrobe yet. Add your first item!" 
-                : `No items in the ${selectedCategory} category.`
-              }
-            </p>
-          </div>
+          selectedCategory === 'all' ? (
+            <EmptyState
+              icon={<Shirt className="h-16 w-16 text-muted-foreground" />}
+              title="Your wardrobe awaits!"
+              description="Start building your digital wardrobe by adding your first clothing item. Upload photos, track wear patterns, and get personalized style recommendations."
+              action={{
+                label: "Add Your First Item",
+                onClick: () => {
+                  // This will trigger the AddWardrobeItemDialog
+                  const addButton = document.querySelector('[data-add-item-trigger]') as HTMLElement;
+                  addButton?.click();
+                }
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon={<Shirt className="h-16 w-16 text-muted-foreground" />}
+              title={`No ${selectedCategory} items yet`}
+              description={`You haven't added any ${selectedCategory} to your wardrobe yet. Start building this category to get better outfit suggestions.`}
+              action={{
+                label: `Add ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}`,
+                onClick: () => {
+                  const addButton = document.querySelector('[data-add-item-trigger]') as HTMLElement;
+                  addButton?.click();
+                }
+              }}
+            />
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredItems.map((item) => (
@@ -272,7 +296,9 @@ const Wardrobe = () => {
 
         {/* Add Item Button */}
         <div className="text-center mt-8">
-          <AddWardrobeItemDialog onItemAdded={fetchWardrobeItems} />
+          <div data-add-item-trigger>
+            <AddWardrobeItemDialog onItemAdded={fetchWardrobeItems} />
+          </div>
         </div>
       </div>
     </div>

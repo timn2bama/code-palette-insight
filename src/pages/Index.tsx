@@ -161,11 +161,72 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-muted/50 py-8 mt-16">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground">
-            Need help? Contact our customer service: <a href="mailto:syncstyleonline@gmail.com" className="text-primary hover:underline">syncstyleonline@gmail.com</a>
-          </p>
+      <footer className="bg-muted/50 py-12 mt-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="font-bold text-primary mb-4">SyncStyle</h3>
+              <p className="text-muted-foreground text-sm">
+                Your smart wardrobe assistant for effortless style management.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-primary mb-4">Company</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="/help" className="text-muted-foreground hover:text-primary transition-colors">
+                    Help Center
+                  </a>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-primary mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-primary mb-4">Support</h4>
+              <p className="text-muted-foreground text-sm mb-2">
+                Need help? Contact us:
+              </p>
+              <a 
+                href="mailto:syncstyleonline@gmail.com" 
+                className="text-primary hover:underline text-sm"
+              >
+                syncstyleonline@gmail.com
+              </a>
+            </div>
+          </div>
+          
+          <div className="border-t border-border/50 mt-8 pt-8 text-center">
+            <p className="text-muted-foreground text-sm">
+              © {new Date().getFullYear()} SyncStyle. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
