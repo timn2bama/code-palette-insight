@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, ChevronRight, Upload, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Upload, Eye, Camera, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   
   // Use the uploaded photo if available, otherwise show placeholder
@@ -188,7 +189,7 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
               </div>
             )}
 
-            {/* Upload New Photo Button */}
+            {/* Upload Photo Options */}
             <input
               ref={fileInputRef}
               type="file"
@@ -196,15 +197,35 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
               onChange={handleFileUpload}
               className="hidden"
             />
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Add Photo'}
-            </Button>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <ImagePlus className="h-4 w-4 mr-2" />
+                {uploading ? 'Uploading...' : 'From Gallery'}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                {uploading ? 'Uploading...' : 'Take Photo'}
+              </Button>
+            </div>
           </div>
 
           {/* Item Details */}
