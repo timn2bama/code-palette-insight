@@ -88,6 +88,26 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
     }
   };
 
+  const markAsWornToday = async () => {
+    try {
+      const { error } = await supabase
+        .from('wardrobe_items')
+        .update({ 
+          wear_count: item.wearCount + 1,
+          last_worn: new Date().toISOString()
+        })
+        .eq('id', item.id);
+
+      if (error) throw error;
+
+      toast.success(`Marked "${item.name}" as worn today!`);
+      onItemUpdated?.(); // Refresh the data
+    } catch (error) {
+      console.error('Error marking item as worn:', error);
+      toast.error('Failed to mark item as worn');
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -256,7 +276,11 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
 
             {/* Quick Actions */}
             <div className="space-y-2">
-              <Button className="w-full" variant="elegant">
+              <Button 
+                className="w-full" 
+                variant="elegant"
+                onClick={markAsWornToday}
+              >
                 Mark as Worn Today
               </Button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

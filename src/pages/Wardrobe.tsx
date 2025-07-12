@@ -60,6 +60,26 @@ const Wardrobe = () => {
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
+  const markAsWorn = async (itemId: string, itemName: string) => {
+    try {
+      const { error } = await supabase
+        .from('wardrobe_items')
+        .update({ 
+          wear_count: clothingItems.find(item => item.id === itemId)?.wearCount + 1 || 1,
+          last_worn: new Date().toISOString()
+        })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast.success(`Marked "${itemName}" as worn today!`);
+      fetchWardrobeItems(); // Refresh the data
+    } catch (error) {
+      console.error('Error marking item as worn:', error);
+      toast.error('Failed to mark item as worn');
+    }
+  };
+
   // Calculate categories dynamically
   const categories = [
     { id: "all", name: "All Items", count: clothingItems.length },
@@ -234,9 +254,14 @@ const Wardrobe = () => {
                        View Details
                      </Button>
                    </ViewDetailsDialog>
-                   <Button variant="gold" size="sm" className="flex-1">
-                     Mark as Worn
-                   </Button>
+                    <Button 
+                      variant="gold" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => markAsWorn(item.id, item.name)}
+                    >
+                      Mark as Worn
+                    </Button>
                  </div>
                 </div>
                </CardContent>
