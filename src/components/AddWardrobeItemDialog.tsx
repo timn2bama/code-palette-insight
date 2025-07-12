@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Upload, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { validateTextInput, validateImageFile, validateImageDimensions, getSafeErrorMessage, rateLimiter } from "@/lib/security";
+import { validateTextInput, validateImageFile, getSafeErrorMessage, rateLimiter } from "@/lib/security";
 import { useAuditLog } from "@/hooks/useAuditLog";
 
 interface AddWardrobeItemDialogProps {
@@ -95,16 +95,19 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     
     // Always compress images from phone cameras (typically > 2MB) or large images
     if (file.size > 2 * 1024 * 1024) {
+      console.log('Original file size:', file.size, 'bytes');
       toast({
         title: "Compressing image...",
         description: "Optimizing image for upload",
       });
       processedFile = await compressImage(file);
+      console.log('Compressed file size:', processedFile.size, 'bytes');
     }
 
     // Final validation on compressed file
     const fileValidation = validateImageFile(processedFile);
     if (!fileValidation.isValid) {
+      console.error('File validation failed:', fileValidation.error);
       toast({
         title: "Invalid file",
         description: fileValidation.error,
@@ -112,6 +115,8 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       });
       return;
     }
+
+    console.log('File passed validation, setting as selected file');
 
     setSelectedFile(processedFile);
     const reader = new FileReader();
