@@ -40,74 +40,118 @@ const Services = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         
-        try {
-          // Use reverse geocoding to get address
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
-          );
-          
-          if (!response.ok) {
-            throw new Error(`Geocoding failed: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('Geocoding response:', data); // Debug log
-          
-          // Extract location components with better fallbacks
-          const cityName = data.address?.city || 
-                          data.address?.town || 
-                          data.address?.village ||
-                          data.address?.suburb ||
-                          data.address?.county ||
-                          data.address?.municipality ||
-                          data.name ||
-                          null;
-          
-          const state = data.address?.state || 
-                       data.address?.state_code ||
-                       data.address?.region ||
-                       null;
-          
-          const country = data.address?.country_code?.toUpperCase() || '';
-          
-          // Build location string with available components
-          let fullAddress = '';
-          if (cityName && state) {
-            fullAddress = `${cityName}, ${state}`;
-          } else if (cityName) {
-            fullAddress = cityName;
-          } else if (state) {
-            fullAddress = state;
-          } else {
-            // Parse from display_name as last resort
+        // Try multiple geocoding methods
+        const reverseGeocode = async () => {
+          // Method 1: Try Nominatim (OpenStreetMap)
+          try {
+            console.log(`Trying Nominatim geocoding for ${latitude}, ${longitude}`);
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
+              {
+                headers: {
+                  'User-Agent': 'WardrobeApp/1.0'
+                }
+              }
+            );
+            
+            if (!response.ok) {
+              throw new Error(`Nominatim failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Nominatim response:', data);
+            
+            if (data.error) {
+              throw new Error(`Nominatim error: ${data.error}`);
+            }
+            
+            const address = data.address || {};
+            const cityName = address.city || 
+                            address.town || 
+                            address.village ||
+                            address.suburb ||
+                            address.county ||
+                            address.municipality ||
+                            null;
+            
+            const state = address.state || 
+                         address.state_code ||
+                         address.region ||
+                         null;
+            
+            if (cityName && state) {
+              return `${cityName}, ${state}`;
+            } else if (cityName) {
+              return cityName;
+            } else if (state) {
+              return state;
+            }
+            
+            // Parse from display_name
             const displayParts = data.display_name?.split(',') || [];
             if (displayParts.length >= 2) {
-              fullAddress = `${displayParts[0].trim()}, ${displayParts[1].trim()}`;
-            } else if (displayParts.length === 1) {
-              fullAddress = displayParts[0].trim();
-            } else {
-              throw new Error('Unable to parse location name');
+              return `${displayParts[0].trim()}, ${displayParts[1].trim()}`;
+            }
+            
+            throw new Error('No usable location data from Nominatim');
+            
+          } catch (error) {
+            console.error('Nominatim geocoding failed:', error);
+            
+            // Method 2: Try BigDataCloud (free, no API key needed)
+            try {
+              console.log(`Trying BigDataCloud geocoding for ${latitude}, ${longitude}`);
+              const response = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+              );
+              
+              if (!response.ok) {
+                throw new Error(`BigDataCloud failed: ${response.status}`);
+              }
+              
+              const data = await response.json();
+              console.log('BigDataCloud response:', data);
+              
+              const city = data.city || data.locality || data.principalSubdivision;
+              const state = data.principalSubdivision || data.countryCode;
+              
+              if (city && state && city !== state) {
+                return `${city}, ${state}`;
+              } else if (city) {
+                return city;
+              }
+              
+              throw new Error('No usable location data from BigDataCloud');
+              
+            } catch (error2) {
+              console.error('BigDataCloud geocoding failed:', error2);
+              throw new Error('All geocoding services failed');
             }
           }
+        };
+        
+        try {
+          const locationName = await reverseGeocode();
+          console.log('Final location name:', locationName);
           
-          setSearchLocation(fullAddress);
-          setCurrentLocation(fullAddress);
+          setSearchLocation(locationName);
+          setCurrentLocation(locationName);
           
           toast({
             title: "Location Found!",
-            description: `Using your current location: ${fullAddress}`,
+            description: `Using your current location: ${locationName}`,
           });
           
         } catch (error) {
-          console.error('Geocoding error:', error);
-          // Fallback to coordinates if geocoding fails
+          console.error('All geocoding failed:', error);
+          // Fallback to coordinates
           const coordsLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           setSearchLocation(coordsLocation);
           setCurrentLocation(coordsLocation);
           
           toast({
-            title: "Location Found!",
-            description: "Using your current coordinates (geocoding unavailable).",
+            title: "Location Found",
+            description: "Using coordinates (location name unavailable)",
             variant: "destructive",
           });
         }
