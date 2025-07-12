@@ -12,3 +12,20 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap
+Sitemap: https://syncstyle.app/sitemap.xml
+
+# Specific pages
+Allow: /wardrobe
+Allow: /outfits
+Allow: /weather
+Allow: /services
+Allow: /auth
+
+# Block admin areas if any
+Disallow: /admin/
+Disallow: /api/
+
+# Crawl delay (optional - helps prevent server overload)
+Crawl-delay: 1
