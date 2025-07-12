@@ -33,12 +33,76 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     "tops", "bottoms", "dresses", "outerwear", "shoes", "accessories"
   ];
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1920x1920)
+        const maxSize = 1920;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file
-    const fileValidation = validateImageFile(file);
+    // Check file type first
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only JPEG, PNG, and WebP images are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let processedFile = file;
+    
+    // If file is too large, compress it
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Compressing image...",
+        description: "Large image detected, compressing for upload",
+      });
+      processedFile = await compressImage(file);
+    }
+
+    // Final validation
+    const fileValidation = validateImageFile(processedFile);
     if (!fileValidation.isValid) {
       toast({
         title: "Invalid file",
@@ -59,12 +123,12 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       return;
     }
 
-    setSelectedFile(file);
+    setSelectedFile(processedFile);
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target?.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processedFile);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
