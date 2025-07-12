@@ -40,8 +40,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       const img = new window.Image();
       
       img.onload = () => {
-        // Calculate new dimensions (max 1920x1920)
-        const maxSize = 1920;
+        // More aggressive compression for phone cameras
+        // Max 1200px for better compression
+        const maxSize = 1200;
         let { width, height } = img;
         
         if (width > height) {
@@ -59,7 +60,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress
+        // Draw and compress with lower quality for smaller files
         ctx?.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (blob) {
@@ -69,7 +70,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
             });
             resolve(compressedFile);
           }
-        }, 'image/jpeg', 0.8);
+        }, 'image/jpeg', 0.7); // Lower quality for smaller file size
       };
       
       img.src = URL.createObjectURL(file);
@@ -92,32 +93,21 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
 
     let processedFile = file;
     
-    // If file is too large, compress it
-    if (file.size > 5 * 1024 * 1024) {
+    // Always compress images from phone cameras (typically > 2MB) or large images
+    if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Compressing image...",
-        description: "Large image detected, compressing for upload",
+        description: "Optimizing image for upload",
       });
       processedFile = await compressImage(file);
     }
 
-    // Final validation
+    // Final validation on compressed file
     const fileValidation = validateImageFile(processedFile);
     if (!fileValidation.isValid) {
       toast({
         title: "Invalid file",
         description: fileValidation.error,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate dimensions
-    const dimensionValidation = await validateImageDimensions(file);
-    if (!dimensionValidation.isValid) {
-      toast({
-        title: "Image too large",
-        description: dimensionValidation.error,
         variant: "destructive",
       });
       return;
