@@ -51,7 +51,7 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { name: "Premium Wardrobe Subscription" },
-            unit_amount: 400, // $4.00 in cents
+            unit_amount: 600, // $6.00 in cents
             recurring: { interval: "month" },
           },
           quantity: 1,

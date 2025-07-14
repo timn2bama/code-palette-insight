@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Image } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, Image, AlertCircle, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { validateTextInput, validateImageFile, getSafeErrorMessage, rateLimiter } from "@/lib/security";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { useUploadLimits } from "@/hooks/useUploadLimits";
 
 interface AddWardrobeItemDialogProps {
   onItemAdded: () => void;
@@ -21,6 +23,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const { logEvent } = useAuditLog();
+  const { canUploadToCategory, getCategoryUsage, uploadLimits, refreshLimits } = useUploadLimits();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -156,6 +159,17 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         return;
       }
 
+      // Check upload limits for selected category
+      if (!canUploadToCategory(formData.category)) {
+        const usage = getCategoryUsage(formData.category);
+        toast({
+          title: "Upload limit reached",
+          description: `You can only upload ${usage.limit} items per category on the free plan. Upgrade to Premium for unlimited uploads.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Validate and sanitize inputs
       const nameValidation = validateTextInput(formData.name, 'name');
       const colorValidation = validateTextInput(formData.color, 'color');
@@ -246,6 +260,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       setSelectedFile(null);
       setPreviewUrl(null);
       setOpen(false);
+      refreshLimits(); // Refresh limits after successful upload
       onItemAdded();
 
     } catch (error) {
@@ -340,13 +355,40 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
+                {categories.map((category) => {
+                  const usage = getCategoryUsage(category);
+                  const isAtLimit = !canUploadToCategory(category);
+                  return (
+                    <SelectItem key={category} value={category} disabled={isAtLimit}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                        {!uploadLimits.isUnlimited && (
+                          <span className={`text-xs ml-2 ${isAtLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
+                            {usage.used}/{usage.limit}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+            {formData.category && !uploadLimits.isUnlimited && (
+              <div className="text-xs text-muted-foreground">
+                {(() => {
+                  const usage = getCategoryUsage(formData.category);
+                  return `${usage.used}/${usage.limit} items used in this category`;
+                })()}
+              </div>
+            )}
+            {!uploadLimits.isUnlimited && (
+              <Alert>
+                <Crown className="h-4 w-4" />
+                <AlertDescription>
+                  Free plan: 4 items per category. <strong>Upgrade to Premium for unlimited uploads!</strong>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Color */}

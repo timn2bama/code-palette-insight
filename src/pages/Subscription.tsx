@@ -136,7 +136,104 @@ export default function Subscription() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Free Plan */}
+        <Card className={!subscriptionStatus.subscribed ? "border-primary" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Free Plan
+              {!subscriptionStatus.subscribed && (
+                <Badge>Current Plan</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Get started with basic wardrobe management
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-3xl font-bold">
+                $0<span className="text-base font-normal text-muted-foreground">/month</span>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">4 items per category</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Basic outfit creation</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Weather integration</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Premium Plan */}
+        <Card className={subscriptionStatus.subscribed ? "border-primary" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Premium Plan
+              {subscriptionStatus.subscribed && (
+                <Badge>Current Plan</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Unlock unlimited uploads and advanced features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-3xl font-bold">
+                $6<span className="text-base font-normal text-muted-foreground">/month</span>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Unlimited uploads</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Advanced outfit suggestions</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Weather-based recommendations</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Priority customer support</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Export wardrobe data</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          {!subscriptionStatus.subscribed && (
+            <CardFooter>
+              <Button 
+                onClick={handleSubscribe} 
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? "Processing..." : "Subscribe Now"}
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
+
         {/* Current Status */}
         <Card>
           <CardHeader>
@@ -203,63 +300,6 @@ export default function Subscription() {
           )}
         </Card>
 
-        {/* Premium Plan */}
-        <Card className={subscriptionStatus.subscribed ? "border-primary" : ""}>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Premium Plan
-              {subscriptionStatus.subscribed && (
-                <Badge>Current Plan</Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Unlock the full potential of your wardrobe
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="text-3xl font-bold">
-                $4<span className="text-base font-normal text-muted-foreground">/month</span>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Unlimited wardrobe items</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Advanced outfit suggestions</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Weather-based recommendations</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Priority customer support</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Export wardrobe data</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          {!subscriptionStatus.subscribed && (
-            <CardFooter>
-              <Button 
-                onClick={handleSubscribe} 
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? "Processing..." : "Subscribe Now"}
-              </Button>
-            </CardFooter>
-          )}
-        </Card>
       </div>
 
       {/* Debug Panel */}
