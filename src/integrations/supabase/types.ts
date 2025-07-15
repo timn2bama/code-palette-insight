@@ -14,6 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          access_restrictions: Json | null
+          api_key: string
+          category: string | null
+          created_at: string
+          description: string | null
+          encrypted_key: string | null
+          encryption_version: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_hash: string | null
+          last_rotated: string | null
+          last_used: string | null
+          name: string
+          next_rotation_due: string | null
+          rotation_interval: number | null
+          security_level: string | null
+          service: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          access_restrictions?: Json | null
+          api_key: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          encrypted_key?: string | null
+          encryption_version?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash?: string | null
+          last_rotated?: string | null
+          last_used?: string | null
+          name: string
+          next_rotation_due?: string | null
+          rotation_interval?: number | null
+          security_level?: string | null
+          service: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          access_restrictions?: Json | null
+          api_key?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          encrypted_key?: string | null
+          encryption_version?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash?: string | null
+          last_rotated?: string | null
+          last_used?: string | null
+          name?: string
+          next_rotation_due?: string | null
+          rotation_interval?: number | null
+          security_level?: string | null
+          service?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          api_key_id: string | null
+          details: Json | null
+          error_message: string | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string
+          success: boolean
+          timestamp: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          api_key_id?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          success?: boolean
+          timestamp?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          api_key_id?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          success?: boolean
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      key_rotations: {
+        Row: {
+          api_key_id: string
+          id: string
+          next_rotation_due: string | null
+          old_key_hash: string | null
+          rotated_at: string
+          rotated_by: string
+          rotation_reason: string
+        }
+        Insert: {
+          api_key_id: string
+          id?: string
+          next_rotation_due?: string | null
+          old_key_hash?: string | null
+          rotated_at?: string
+          rotated_by: string
+          rotation_reason: string
+        }
+        Update: {
+          api_key_id?: string
+          id?: string
+          next_rotation_due?: string | null
+          old_key_hash?: string | null
+          rotated_at?: string
+          rotated_by?: string
+          rotation_reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_rotations_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outfit_items: {
         Row: {
           created_at: string
@@ -110,6 +273,75 @@ export type Database = {
         }
         Relationships: []
       }
+      security_settings: {
+        Row: {
+          created_at: string
+          id: string
+          setting_name: string
+          setting_value: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setting_name: string
+          setting_value: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setting_name?: string
+          setting_value?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shared_api_keys: {
+        Row: {
+          api_key_id: string
+          id: string
+          permissions: string
+          shared_at: string
+          shared_by: string
+          team_id: string
+        }
+        Insert: {
+          api_key_id: string
+          id?: string
+          permissions?: string
+          shared_at?: string
+          shared_by: string
+          team_id: string
+        }
+        Update: {
+          api_key_id?: string
+          id?: string
+          permissions?: string
+          shared_at?: string
+          shared_by?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_api_keys_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_api_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -143,6 +375,103 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          id: string
+          invited_by: string
+          joined_at: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          invited_by: string
+          joined_at?: string
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          invited_by?: string
+          joined_at?: string
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission_name: string
+          permission_value: boolean
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission_name: string
+          permission_value?: boolean
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission_name?: string
+          permission_value?: boolean
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_permissions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+interface WardrobeItem {
+  id: string;
+  name: string;
+  category: string;
+  color: string | null;
+  photo_url: string | null;
+}
 
 interface OutfitSuggestion {
   id: number;
@@ -16,6 +24,7 @@ interface OutfitSuggestion {
   outfit: string;
   items: string[];
   reason: string;
+  wardrobeItems?: WardrobeItem[];
 }
 
 interface OutfitSuggestionsProps {
@@ -28,7 +37,77 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
   const [selectedSuggestion, setSelectedSuggestion] = useState<OutfitSuggestion | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
+  const [suggestionsWithItems, setSuggestionsWithItems] = useState<OutfitSuggestion[]>([]);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchWardrobeItems();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (wardrobeItems.length > 0) {
+      enhanceSuggestionsWithUserItems();
+    }
+  }, [weatherSuggestions, wardrobeItems]);
+
+  const fetchWardrobeItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wardrobe_items')
+        .select('id, name, category, color, photo_url')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      setWardrobeItems(data || []);
+    } catch (error) {
+      console.error('Error fetching wardrobe items:', error);
+    }
+  };
+
+  const enhanceSuggestionsWithUserItems = () => {
+    const enhanced = weatherSuggestions.map(suggestion => {
+      const matchedItems = findMatchingWardrobeItems(suggestion.items);
+      return {
+        ...suggestion,
+        wardrobeItems: matchedItems
+      };
+    });
+    setSuggestionsWithItems(enhanced);
+  };
+
+  const findMatchingWardrobeItems = (suggestionItems: string[]): WardrobeItem[] => {
+    const matched: WardrobeItem[] = [];
+    
+    suggestionItems.forEach(item => {
+      const normalizedSuggestion = item.toLowerCase();
+      const wardrobeItem = wardrobeItems.find(w => {
+        const itemName = w.name.toLowerCase();
+        const category = w.category.toLowerCase();
+        
+        // Check for category matches
+        if (normalizedSuggestion.includes('shirt') && category.includes('shirt')) return true;
+        if (normalizedSuggestion.includes('jacket') && (category.includes('jacket') || category.includes('coat'))) return true;
+        if (normalizedSuggestion.includes('pants') && (category.includes('pants') || category.includes('jeans'))) return true;
+        if (normalizedSuggestion.includes('shoes') && category.includes('shoes')) return true;
+        if (normalizedSuggestion.includes('dress') && category.includes('dress')) return true;
+        if (normalizedSuggestion.includes('sweater') && category.includes('sweater')) return true;
+        if (normalizedSuggestion.includes('top') && (category.includes('top') || category.includes('blouse'))) return true;
+        
+        // Check for name matches
+        return itemName.includes(normalizedSuggestion.split(' ')[0]) || 
+               normalizedSuggestion.includes(itemName.split(' ')[0]);
+      });
+      
+      if (wardrobeItem && !matched.find(m => m.id === wardrobeItem.id)) {
+        matched.push(wardrobeItem);
+      }
+    });
+    
+    return matched;
+  };
 
   const handleCreateOutfit = async () => {
     if (!selectedSuggestion || !user || !outfitName.trim()) return;
@@ -48,6 +127,22 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
         .single();
 
       if (outfitError) throw outfitError;
+
+      // Add wardrobe items to the outfit if any were matched
+      if (selectedSuggestion.wardrobeItems && selectedSuggestion.wardrobeItems.length > 0) {
+        const outfitItems = selectedSuggestion.wardrobeItems.map(item => ({
+          outfit_id: outfitData.id,
+          wardrobe_item_id: item.id
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('outfit_items')
+          .insert(outfitItems);
+
+        if (itemsError) {
+          console.error('Error adding items to outfit:', itemsError);
+        }
+      }
 
       toast.success(`Outfit "${outfitName}" created successfully!`);
       setDialogOpen(false);
@@ -84,7 +179,7 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
         Today's Outfit Suggestions
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {weatherSuggestions.map((suggestion) => (
+        {suggestionsWithItems.map((suggestion) => (
           <Card key={suggestion.id} className="shadow-card hover:shadow-elegant transition-all duration-300">
             <CardHeader>
               <CardTitle className="text-lg">{suggestion.outfit}</CardTitle>
@@ -92,6 +187,38 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {suggestion.wardrobeItems && suggestion.wardrobeItems.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                      <Image className="h-4 w-4" />
+                      Your Items
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {suggestion.wardrobeItems.slice(0, 4).map((item) => (
+                        <div key={item.id} className="flex flex-col items-center bg-secondary/30 rounded p-2">
+                          {item.photo_url ? (
+                            <img 
+                              src={item.photo_url} 
+                              alt={item.name}
+                              className="w-12 h-12 rounded object-cover mb-1"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-secondary/50 rounded flex items-center justify-center mb-1">
+                              <Image className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="text-xs text-center">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {suggestion.wardrobeItems.length > 4 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        +{suggestion.wardrobeItems.length - 4} more items
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommended Items</h4>
                   <div className="space-y-1">
@@ -115,6 +242,9 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
                 >
                   <Plus className="h-4 w-4" />
                   Create This Outfit
+                  {suggestion.wardrobeItems && suggestion.wardrobeItems.length > 0 && (
+                    <span className="text-xs ml-1">({suggestion.wardrobeItems.length} items)</span>
+                  )}
                 </Button>
               </div>
             </CardContent>
