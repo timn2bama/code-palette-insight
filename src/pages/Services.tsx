@@ -29,62 +29,57 @@ const Services = () => {
     const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
     
     try {
-      console.log(`Geocoding coordinates: ${lat}, ${lng}`);
+      console.log(`🌍 Geocoding coordinates: ${lat}, ${lng}`);
       
-      // Try Nominatim first
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=en`,
-        {
-          headers: {
-            'User-Agent': 'WardrobeApp/1.0'
-          }
-        }
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        const address = data.address || {};
-        
-        const cityName = address.city || 
-                        address.town || 
-                        address.village ||
-                        address.suburb ||
-                        address.county ||
-                        address.municipality;
-        
-        const state = address.state || 
-                     address.state_code ||
-                     address.region;
-        
-        if (cityName && state) {
-          return `${cityName}, ${state}`;
-        } else if (cityName) {
-          return cityName;
-        }
-      }
-      
-      // Fallback to BigDataCloud
+      // Try BigDataCloud first (more reliable and no CORS issues)
       const bdcResponse = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
       );
       
       if (bdcResponse.ok) {
         const bdcData = await bdcResponse.json();
-        const city = bdcData.city || bdcData.locality || bdcData.principalSubdivision;
-        const state = bdcData.principalSubdivision || bdcData.countryCode;
+        console.log('🌍 BigDataCloud response:', bdcData);
         
-        if (city && state && city !== state) {
-          return `${city}, ${state}`;
+        const city = bdcData.city || bdcData.locality;
+        const state = bdcData.principalSubdivision;
+        const country = bdcData.countryName;
+        
+        if (city && state && country === 'United States') {
+          const result = `${city}, ${state}`;
+          console.log(`✅ Geocoded to: ${result}`);
+          return result;
+        } else if (city && state) {
+          const result = `${city}, ${state}`;
+          console.log(`✅ Geocoded to: ${result}`);
+          return result;
         } else if (city) {
+          console.log(`✅ Geocoded to: ${city}`);
           return city;
         }
       }
       
+      // Fallback: Try a simpler approach with ipapi.co (works well for general location)
+      try {
+        console.log('🌍 Trying alternative geocoding...');
+        const response = await fetch(`https://ipapi.co/json/`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.city && data.region) {
+            const result = `${data.city}, ${data.region}`;
+            console.log(`✅ Fallback geocoded to: ${result}`);
+            return result;
+          }
+        }
+      } catch (fallbackError) {
+        console.log('⚠️ Fallback geocoding failed:', fallbackError);
+      }
+      
     } catch (error) {
-      console.error('Geocoding failed:', error);
+      console.error('❌ Geocoding failed:', error);
     }
     
-    // Return formatted coordinates as fallback
+    // Return formatted coordinates as final fallback
+    console.log(`⚠️ Using coordinates as fallback: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   };
   
