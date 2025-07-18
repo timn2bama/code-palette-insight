@@ -117,9 +117,11 @@ const Services = () => {
   };
 
   const getCurrentLocation = () => {
+    console.log('📍 getCurrentLocation called');
     setLocationLoading(true);
     
     if (!navigator.geolocation) {
+      console.error('❌ Geolocation not supported');
       toast({
         title: "Error",
         description: "Geolocation is not supported by this browser.",
@@ -129,103 +131,16 @@ const Services = () => {
       return;
     }
 
+    console.log('🔍 Requesting current position...');
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
-        // Try multiple geocoding methods
-        const reverseGeocode = async () => {
-          // Method 1: Try Nominatim (OpenStreetMap)
-          try {
-            console.log(`Trying Nominatim geocoding for ${latitude}, ${longitude}`);
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
-              {
-                headers: {
-                  'User-Agent': 'WardrobeApp/1.0'
-                }
-              }
-            );
-            
-            if (!response.ok) {
-              throw new Error(`Nominatim failed: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Nominatim response:', data);
-            
-            if (data.error) {
-              throw new Error(`Nominatim error: ${data.error}`);
-            }
-            
-            const address = data.address || {};
-            const cityName = address.city || 
-                            address.town || 
-                            address.village ||
-                            address.suburb ||
-                            address.county ||
-                            address.municipality ||
-                            null;
-            
-            const state = address.state || 
-                         address.state_code ||
-                         address.region ||
-                         null;
-            
-            if (cityName && state) {
-              return `${cityName}, ${state}`;
-            } else if (cityName) {
-              return cityName;
-            } else if (state) {
-              return state;
-            }
-            
-            // Parse from display_name
-            const displayParts = data.display_name?.split(',') || [];
-            if (displayParts.length >= 2) {
-              return `${displayParts[0].trim()}, ${displayParts[1].trim()}`;
-            }
-            
-            throw new Error('No usable location data from Nominatim');
-            
-          } catch (error) {
-            console.error('Nominatim geocoding failed:', error);
-            
-            // Method 2: Try BigDataCloud (free, no API key needed)
-            try {
-              console.log(`Trying BigDataCloud geocoding for ${latitude}, ${longitude}`);
-              const response = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-              );
-              
-              if (!response.ok) {
-                throw new Error(`BigDataCloud failed: ${response.status}`);
-              }
-              
-              const data = await response.json();
-              console.log('BigDataCloud response:', data);
-              
-              const city = data.city || data.locality || data.principalSubdivision;
-              const state = data.principalSubdivision || data.countryCode;
-              
-              if (city && state && city !== state) {
-                return `${city}, ${state}`;
-              } else if (city) {
-                return city;
-              }
-              
-              throw new Error('No usable location data from BigDataCloud');
-              
-            } catch (error2) {
-              console.error('BigDataCloud geocoding failed:', error2);
-              throw new Error('All geocoding services failed');
-            }
-          }
-        };
+        console.log(`✅ Got coordinates: ${latitude}, ${longitude}`);
         
         try {
-          const locationName = await reverseGeocode();
-          console.log('Final location name:', locationName);
+          // Use the same geocoding function we created earlier
+          const locationName = await geocodeCoordinates(`${latitude}, ${longitude}`);
+          console.log('📍 Geocoded location:', locationName);
           
           setSearchLocation(locationName);
           setCurrentLocation(locationName);
@@ -236,34 +151,39 @@ const Services = () => {
           });
           
         } catch (error) {
-          console.error('All geocoding failed:', error);
-          // Fallback to coordinates
+          console.error('❌ Geocoding failed:', error);
+          // Fallback to coordinates with better formatting
           const coordsLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           setSearchLocation(coordsLocation);
           setCurrentLocation(coordsLocation);
           
           toast({
             title: "Location Found",
-            description: "Using coordinates (location name unavailable)",
-            variant: "destructive",
+            description: "Using coordinates (city name lookup failed)",
           });
         }
         
         setLocationLoading(false);
       },
       (error) => {
+        console.error('❌ Geolocation error:', error);
         let errorMessage = "Unable to retrieve your location.";
         
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Location access denied. Please enable location permissions.";
+            errorMessage = "Location access denied. Please enable location permissions in your browser.";
+            console.error('Permission denied for location access');
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = "Location information is unavailable.";
+            console.error('Position unavailable');
             break;
           case error.TIMEOUT:
-            errorMessage = "Location request timed out.";
+            errorMessage = "Location request timed out. Please try again.";
+            console.error('Location request timeout');
             break;
+          default:
+            console.error('Unknown geolocation error:', error.message);
         }
         
         toast({
@@ -276,8 +196,8 @@ const Services = () => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+        timeout: 15000, // Increased timeout
+        maximumAge: 300000 // 5 minutes cache
       }
     );
   };
