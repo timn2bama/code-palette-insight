@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,106 @@ const Services = () => {
   const [currentLocation, setCurrentLocation] = useState("San Francisco, CA");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast } = useToast();
+
+  // Function to detect if a string contains coordinates
+  const isCoordinateString = (location: string): boolean => {
+    const coordPattern = /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/;
+    return coordPattern.test(location.trim());
+  };
+
+  // Function to geocode coordinates to city name
+  const geocodeCoordinates = async (location: string): Promise<string> => {
+    if (!isCoordinateString(location)) {
+      return location; // Already a city name
+    }
+
+    const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+    
+    try {
+      console.log(`Geocoding coordinates: ${lat}, ${lng}`);
+      
+      // Try Nominatim first
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=en`,
+        {
+          headers: {
+            'User-Agent': 'WardrobeApp/1.0'
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const address = data.address || {};
+        
+        const cityName = address.city || 
+                        address.town || 
+                        address.village ||
+                        address.suburb ||
+                        address.county ||
+                        address.municipality;
+        
+        const state = address.state || 
+                     address.state_code ||
+                     address.region;
+        
+        if (cityName && state) {
+          return `${cityName}, ${state}`;
+        } else if (cityName) {
+          return cityName;
+        }
+      }
+      
+      // Fallback to BigDataCloud
+      const bdcResponse = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+      );
+      
+      if (bdcResponse.ok) {
+        const bdcData = await bdcResponse.json();
+        const city = bdcData.city || bdcData.locality || bdcData.principalSubdivision;
+        const state = bdcData.principalSubdivision || bdcData.countryCode;
+        
+        if (city && state && city !== state) {
+          return `${city}, ${state}`;
+        } else if (city) {
+          return city;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+    }
+    
+    // Return formatted coordinates as fallback
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  };
   
   const { data, loading, error, refetch } = useLocalServices({
     location: currentLocation
   });
 
-  const handleSearch = () => {
-    setCurrentLocation(searchLocation);
+  // Auto-geocode coordinates when component loads
+  useEffect(() => {
+    const autoGeocodeLocation = async () => {
+      if (isCoordinateString(currentLocation)) {
+        console.log('Auto-geocoding coordinates on load:', currentLocation);
+        const geocodedLocation = await geocodeCoordinates(currentLocation);
+        if (geocodedLocation !== currentLocation) {
+          setCurrentLocation(geocodedLocation);
+          setSearchLocation(geocodedLocation);
+        }
+      }
+    };
+
+    autoGeocodeLocation();
+  }, []); // Only run on initial load
+
+  const handleSearch = async () => {
+    // Try to geocode if it looks like coordinates
+    const locationToUse = await geocodeCoordinates(searchLocation);
+    setCurrentLocation(locationToUse);
+    setSearchLocation(locationToUse);
     refetch();
   };
 
