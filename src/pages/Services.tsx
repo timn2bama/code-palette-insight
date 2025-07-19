@@ -197,6 +197,17 @@ const Services = () => {
     );
   };
 
+  const openDirections = (service: any) => {
+    const address = service.vicinity || service.formatted_address || service.name;
+    const encodedAddress = encodeURIComponent(address);
+    
+    // Create maps URL that works on all platforms
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    
+    // Open in new tab/window
+    window.open(mapsUrl, '_blank');
+  };
+
   const getPriceColor = (price: string) => {
     switch (price) {
       case "$": return "text-green-600";
@@ -396,7 +407,12 @@ const Services = () => {
                               <Button variant="outline" size="sm" className="flex-1">
                                 📞 Call
                               </Button>
-                              <Button variant="gold" size="sm" className="flex-1">
+                              <Button 
+                                variant="gold" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => openDirections(service)}
+                              >
                                 🗺️ Directions
                               </Button>
                               <Button variant="premium" size="sm" className="flex-1">
