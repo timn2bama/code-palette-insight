@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import { useLocalServices } from "@/hooks/useLocalServices";
+import { useSavedServices } from "@/hooks/useSavedServices";
 
 const Services = () => {
   const [searchLocation, setSearchLocation] = useState("San Francisco, CA");
   const [currentLocation, setCurrentLocation] = useState("San Francisco, CA");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast } = useToast();
+  const { isServiceSaved, toggleSaveService } = useSavedServices();
 
   // Function to detect if a string contains coordinates
   const isCoordinateString = (location: string): boolean => {
@@ -198,7 +201,7 @@ const Services = () => {
   };
 
   const openDirections = (service: any) => {
-    const address = service.vicinity || service.formatted_address || service.name;
+    const address = service.address || service.name;
     const encodedAddress = encodeURIComponent(address);
     
     // Create maps URL that works on all platforms
@@ -415,8 +418,23 @@ const Services = () => {
                               >
                                 🗺️ Directions
                               </Button>
-                              <Button variant="premium" size="sm" className="flex-1">
-                                ⭐ Save
+                              <Button 
+                                variant={isServiceSaved(service.name, service.address || '') ? "default" : "premium"} 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => toggleSaveService(service)}
+                              >
+                                {isServiceSaved(service.name, service.address || '') ? (
+                                  <>
+                                    <Heart className="w-4 h-4 mr-1 fill-current" />
+                                    Saved
+                                  </>
+                                ) : (
+                                  <>
+                                    <Star className="w-4 h-4 mr-1" />
+                                    Save
+                                  </>
+                                )}
                               </Button>
                             </div>
                           </div>
