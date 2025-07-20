@@ -23,7 +23,7 @@ const Navigation = () => {
   };
 
   // Pages that should show back to home button
-  const featurePages = ["/wardrobe", "/outfits", "/weather", "/services"];
+  const featurePages = ["/wardrobe", "/outfits", "/weather", "/services", "/subscription"];
   const showBackButton = featurePages.includes(location.pathname);
 
   const navigationItems = [
