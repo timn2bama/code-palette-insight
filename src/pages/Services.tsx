@@ -407,6 +407,9 @@ const Services = () => {
 
                             {/* Action Buttons */}
                             <div className="flex gap-2 pt-2">
+                              <Button variant="outline" size="sm" className="flex-1">
+                                📞 Call
+                              </Button>
                               <Button 
                                 variant="gold" 
                                 size="sm" 
