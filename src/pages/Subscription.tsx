@@ -302,22 +302,6 @@ export default function Subscription() {
 
       </div>
 
-      {/* Debug Panel */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle className="text-lg">Debug Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <div><strong>User ID:</strong> {user.id}</div>
-            <div><strong>Email:</strong> {user.email}</div>
-            <div><strong>Subscribed:</strong> {subscriptionStatus.subscribed ? 'Yes' : 'No'}</div>
-            <div><strong>Tier:</strong> {subscriptionStatus.subscription_tier || 'None'}</div>
-            <div><strong>End Date:</strong> {subscriptionStatus.subscription_end || 'None'}</div>
-            <div><strong>Last Check:</strong> {new Date().toLocaleTimeString()}</div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
