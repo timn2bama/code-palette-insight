@@ -23,10 +23,11 @@ const Navigation = () => {
   };
 
   // Pages that should show back to home button
-  const featurePages = ["/wardrobe", "/outfits", "/weather", "/services", "/subscription"];
+  const featurePages = ["/wardrobe", "/outfits", "/weather", "/services", "/subscription", "/blog/admin"];
   const showBackButton = featurePages.includes(location.pathname);
 
   const navigationItems = [
+    { name: "Blog", path: "/blog", icon: "📝" },
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
     { name: "Outfits", path: "/outfits", icon: "✨" },
     { name: "Weather", path: "/weather", icon: "🌤️" },
@@ -57,7 +58,20 @@ const Navigation = () => {
         <SecurityStatus />
         
         <nav className="hidden md:flex items-center gap-4">
-          {user && navigationItems.map((item) => (
+          <Link
+            to="/blog"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
+              location.pathname.startsWith("/blog")
+                ? "bg-accent text-accent-foreground shadow-card"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            <span>📝</span>
+            Blog
+          </Link>
+          
+          {user && navigationItems.slice(1).map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -114,7 +128,21 @@ const Navigation = () => {
               </Button>
             )}
             
-            {user && navigationItems.map((item) => (
+            <Link
+              to="/blog"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
+                location.pathname.startsWith("/blog")
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <span>📝</span>
+              Blog
+            </Link>
+            
+            {user && navigationItems.slice(1).map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
