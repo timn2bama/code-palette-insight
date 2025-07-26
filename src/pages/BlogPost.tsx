@@ -106,7 +106,7 @@ export default function BlogPost() {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               <span>
-                {new Date(post.published_at + 'T00:00:00').toLocaleDateString('en-US', {
+                {new Date().toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'

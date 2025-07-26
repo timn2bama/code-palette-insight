@@ -60,6 +60,11 @@ export default function Blog() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Button asChild variant="ghost" className="mb-6">
+        <Link to="/">
+          ← Back to Main Menu
+        </Link>
+      </Button>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold mb-2">SyncStyle Blog</h1>
@@ -105,7 +110,7 @@ export default function Blog() {
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       <span>
-                        {new Date(post.published_at).toLocaleDateString('en-US', {
+                        {new Date().toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
