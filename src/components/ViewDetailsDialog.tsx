@@ -36,9 +36,9 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   
-  // Use the uploaded photo if available, otherwise show placeholder
+  // Use the uploaded photo if available, otherwise show a generic clothing placeholder
   const photos = item.photo_url ? [item.photo_url] : [
-    `https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop`
+    `https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&h=600&fit=crop&auto=format`
   ];
 
   const nextPhoto = () => {
