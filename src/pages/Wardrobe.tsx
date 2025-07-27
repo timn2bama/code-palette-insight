@@ -295,9 +295,30 @@ const Wardrobe = () => {
         )}
 
         {/* Add Item Button */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 space-y-4">
           <div data-add-item-trigger>
             <AddWardrobeItemDialog onItemAdded={fetchWardrobeItems} />
+          </div>
+          
+          <div className="border-t pt-4">
+            <p className="text-sm text-muted-foreground mb-3">Need sample clothing items to get started?</p>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('populate-sample-wardrobe');
+                  if (error) throw error;
+                  toast.success('Sample wardrobe populated successfully!');
+                  fetchWardrobeItems();
+                } catch (error) {
+                  toast.error('Failed to populate sample wardrobe');
+                }
+              }}
+              className="mx-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Populate Sample Wardrobe
+            </Button>
           </div>
         </div>
       </div>
