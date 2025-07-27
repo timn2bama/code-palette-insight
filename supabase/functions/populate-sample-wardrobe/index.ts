@@ -90,15 +90,40 @@ serve(async (req) => {
     // Check if user already has sample data
     const { data: existingItems } = await supabaseClient
       .from('wardrobe_items')
-      .select('id')
+      .select('id, name, photo_url')
       .eq('user_id', user.id)
-      .eq('name', 'Classic White Dress Shirt')
 
+    // If items exist but don't have photos, update them
     if (existingItems && existingItems.length > 0) {
-      return new Response(
-        JSON.stringify({ message: 'Sample wardrobe already populated' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      const itemsWithoutPhotos = existingItems.filter(item => !item.photo_url)
+      
+      if (itemsWithoutPhotos.length > 0) {
+        // Update existing items with photos
+        for (const existingItem of itemsWithoutPhotos) {
+          const sampleItem = sampleClothing.find(sample => sample.name === existingItem.name)
+          if (sampleItem?.photo_url) {
+            await supabaseClient
+              .from('wardrobe_items')
+              .update({ photo_url: sampleItem.photo_url })
+              .eq('id', existingItem.id)
+          }
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            message: 'Updated existing items with photos',
+            itemsUpdated: itemsWithoutPhotos.length 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      if (existingItems.length >= 10) {
+        return new Response(
+          JSON.stringify({ message: 'Sample wardrobe already populated with photos' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     // Insert sample clothing items
