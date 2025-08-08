@@ -11,7 +11,8 @@ import EmptyState from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Shirt, Plus } from "lucide-react";
+import { Shirt, Plus, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -80,6 +81,18 @@ const Wardrobe = () => {
     } catch (error) {
       console.error('Error marking item as worn:', error);
       toast.error('Failed to mark item as worn');
+    }
+  };
+
+  const handleResetWardrobe = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('reset-wardrobe');
+      if (error) throw error;
+      toast.success('Wardrobe reset successfully');
+      fetchWardrobeItems();
+    } catch (error) {
+      console.error('Error resetting wardrobe:', error);
+      toast.error('Failed to reset wardrobe');
     }
   };
 
@@ -319,6 +332,27 @@ const Wardrobe = () => {
               <Plus className="w-4 h-4 mr-2" />
               Populate Sample Wardrobe
             </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="mx-2">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Reset Wardrobe
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset your wardrobe?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all wardrobe items, outfits, and photos. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetWardrobe}>Yes, delete everything</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
