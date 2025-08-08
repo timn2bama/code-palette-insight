@@ -1,6 +1,6 @@
 // Supabase Edge Function: reset-wardrobe
 // Deletes the current user's wardrobe data: outfit_items, outfits, wardrobe_items, and stored photos
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
