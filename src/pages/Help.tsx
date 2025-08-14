@@ -167,7 +167,7 @@ const Help = () => {
           {/* Privacy & Data Controls */}
           {user && (
             <div className="mt-8">
-              <PrivacyControls />
+              {/* <PrivacyControls /> */}
             </div>
           )}
 

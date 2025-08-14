@@ -6,11 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ChevronRight, Upload, Eye, Camera, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AddToOutfitDialog from "./AddToOutfitDialog";
 import OutfitSuggestionsDialog from "./OutfitSuggestionsDialog";
+import { storage, db } from "@/integrations/firebase/client";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as dbRef, update, serverTimestamp } from "firebase/database";
 
 interface ClothingItem {
   id: string;
@@ -36,7 +38,6 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   
-  // Use the uploaded photo if available, otherwise show a generic clothing placeholder
   const photos = item.photo_url ? [item.photo_url] : [
     `https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&h=600&fit=crop&auto=format`
   ];
@@ -60,27 +61,17 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${item.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.uid}/${item.id}/${Date.now()}.${fileExt}`;
+      const imageRef = storageRef(storage, `wardrobe-photos/${fileName}`);
 
-      const { error: uploadError } = await supabase.storage
-        .from('wardrobe-photos')
-        .upload(fileName, file);
+      await uploadBytes(imageRef, file);
+      const photo_url = await getDownloadURL(imageRef);
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('wardrobe-photos')
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from('wardrobe_items')
-        .update({ photo_url: publicUrl })
-        .eq('id', item.id);
-
-      if (updateError) throw updateError;
+      const itemRef = dbRef(db, `wardrobe_items/${user.uid}/${item.id}`);
+      await update(itemRef, { photo_url });
 
       toast.success('Photo uploaded successfully!');
-      onItemUpdated?.();
+      onItemUpdated?.(); // This will be handled by real-time listener in parent
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error('Failed to upload photo');
@@ -90,19 +81,16 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   };
 
   const markAsWornToday = async () => {
+    if (!user) return;
     try {
-      const { error } = await supabase
-        .from('wardrobe_items')
-        .update({ 
-          wear_count: item.wearCount + 1,
-          last_worn: new Date().toISOString()
-        })
-        .eq('id', item.id);
-
-      if (error) throw error;
+      const itemRef = dbRef(db, `wardrobe_items/${user.uid}/${item.id}`);
+      await update(itemRef, {
+        wear_count: item.wearCount + 1,
+        last_worn: serverTimestamp()
+      });
 
       toast.success(`Marked "${item.name}" as worn today!`);
-      onItemUpdated?.(); // Refresh the data
+      onItemUpdated?.(); // This will be handled by real-time listener in parent
     } catch (error) {
       console.error('Error marking item as worn:', error);
       toast.error('Failed to mark item as worn');

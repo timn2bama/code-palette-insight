@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db, app } from "@/integrations/firebase/client";
+import { ref, get } from "firebase/database";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 interface UploadLimits {
   maxUploadsPerCategory: number;
@@ -19,46 +21,50 @@ export const useUploadLimits = () => {
   });
   const [categoryCounts, setCategoryCounts] = useState<CategoryCount[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, subscriptionStatus } = useAuth(); // Use subscriptionStatus from AuthContext
 
-  const checkSubscriptionAndLimits = async () => {
-    if (!user) return;
-
+  const checkLimits = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      // Check subscription status
-      const { data: subData } = await supabase.functions.invoke('check-subscription');
-      const isSubscribed = subData?.subscribed || false;
+      // Get current category counts from Firebase
+      const itemsRef = ref(db, `wardrobe_items/${user.uid}`);
+      const snapshot = await get(itemsRef);
+      let items: any[] = [];
+      if (snapshot.exists()) {
+        items = Object.values(snapshot.val());
+      }
 
-      // Get current category counts
-      const { data: items, error } = await supabase
-        .from('wardrobe_items')
-        .select('category')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Count items per category
-      const counts = items?.reduce((acc: { [key: string]: number }, item) => {
+      const counts = items.reduce((acc: { [key: string]: number }, item) => {
         acc[item.category] = (acc[item.category] || 0) + 1;
         return acc;
-      }, {}) || {};
+      }, {});
 
       const categoryCountsArray = Object.entries(counts).map(([category, count]) => ({
         category,
         count: count as number
       }));
+      setCategoryCounts(categoryCountsArray);
 
+      // Use the subscription status from AuthContext
+      const isSubscribed = subscriptionStatus.subscribed;
       setUploadLimits({
         maxUploadsPerCategory: isSubscribed ? Infinity : 4,
         isUnlimited: isSubscribed
       });
-      setCategoryCounts(categoryCountsArray);
     } catch (error) {
       console.error('Error checking upload limits:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, subscriptionStatus]);
+
+  useEffect(() => {
+    checkLimits();
+  }, [checkLimits]);
 
   const canUploadToCategory = (category: string): boolean => {
     if (uploadLimits.isUnlimited) return true;

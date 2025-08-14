@@ -4,43 +4,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Check, X, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-interface SubscriptionStatus {
-  subscribed: boolean;
-  subscription_tier?: string;
-  subscription_end?: string;
-}
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { app } from "@/integrations/firebase/client";
 
 export default function Subscription() {
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({ subscribed: false });
   const [loading, setLoading] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(true);
-  const { user } = useAuth();
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const { user, subscriptionStatus, checkSubscription } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const checkSubscriptionStatus = async () => {
-    if (!user) return;
-    
+  const handleRefreshStatus = async () => {
     setCheckingStatus(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      if (error) throw error;
-      setSubscriptionStatus(data);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check subscription status",
-        variant: "destructive",
-      });
-    } finally {
-      setCheckingStatus(false);
-    }
+    await checkSubscription();
+    setCheckingStatus(false);
   };
 
   const handleSubscribe = async () => {
@@ -48,11 +28,11 @@ export default function Subscription() {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
-      if (error) throw error;
-      
-      // Open Stripe checkout in a new tab
-      window.open(data.url, '_blank');
+      const functions = getFunctions(app);
+      const createCheckout = httpsCallable(functions, 'createCheckoutSession');
+      const result = await createCheckout({ origin: window.location.origin });
+      const data = result.data as { url: string };
+      window.location.href = data.url; // Redirect to Stripe
     } catch (error) {
       console.error('Error creating checkout:', error);
       toast({
@@ -70,11 +50,11 @@ export default function Subscription() {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      if (error) throw error;
-      
-      // Open Stripe customer portal in a new tab
-      window.open(data.url, '_blank');
+      const functions = getFunctions(app);
+      const createPortal = httpsCallable(functions, 'createCustomerPortalSession');
+      const result = await createPortal({ origin: window.location.origin });
+      const data = result.data as { url: string };
+      window.location.href = data.url; // Redirect to Stripe
     } catch (error) {
       console.error('Error opening customer portal:', error);
       toast({
@@ -90,16 +70,8 @@ export default function Subscription() {
   useEffect(() => {
     if (!user) {
       navigate('/auth');
-      return;
     }
-    checkSubscriptionStatus();
   }, [user, navigate]);
-
-  useEffect(() => {
-    // Auto-refresh subscription status every 10 seconds
-    const interval = setInterval(checkSubscriptionStatus, 10000);
-    return () => clearInterval(interval);
-  }, [user]);
 
   useEffect(() => {
     // Check for success/cancel parameters from Stripe redirect

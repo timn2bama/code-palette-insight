@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { auth, app } from '@/integrations/firebase/client';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { validateEmail, getSafeErrorMessage, rateLimiter } from '@/lib/security';
 
 interface SubscriptionStatus {
@@ -11,7 +12,6 @@ interface SubscriptionStatus {
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
   subscriptionStatus: SubscriptionStatus;
   checkSubscription: () => Promise<void>;
@@ -32,61 +32,39 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({ subscribed: false });
 
   const checkSubscription = async () => {
     if (!user) return;
-    
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      if (error) throw error;
-      setSubscriptionStatus(data);
+      const functions = getFunctions(app);
+      const checkSubscriptionFunction = httpsCallable(functions, 'checkSubscription');
+      const result = await checkSubscriptionFunction();
+      setSubscriptionStatus(result.data as SubscriptionStatus);
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('Error checking subscription status:', error);
+      setSubscriptionStatus({ subscribed: false });
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        // Check subscription status when user changes
-        if (session?.user) {
-          setTimeout(() => {
-            checkSubscription();
-          }, 0);
-        } else {
-          setSubscriptionStatus({ subscribed: false });
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
-      
-      // Check subscription status for existing session
-      if (session?.user) {
-        setTimeout(() => {
-          checkSubscription();
-        }, 0);
+      if (user) {
+        checkSubscription();
+      } else {
+        setSubscriptionStatus({ subscribed: false });
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => unsubscribe();
+  }, [user]); // Rerun when user object changes
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     // Rate limiting
-    if (!rateLimiter.isAllowed('signup', 3, 300000)) { // 3 attempts per 5 minutes
+    if (!rateLimiter.isAllowed('signup', 3, 300000)) {
       return { error: new Error('Too many signup attempts. Please wait before trying again.') };
     }
 
@@ -102,65 +80,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            display_name: displayName?.trim()
-          }
-        }
-      });
-      
-      return { error: error ? new Error(getSafeErrorMessage(error)) : null };
+      const userCredential = await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
+      if (displayName) {
+        await updateProfile(userCredential.user, { displayName: displayName.trim() });
+      }
+      return { error: null };
     } catch (error) {
       return { error: new Error(getSafeErrorMessage(error)) };
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    // Rate limiting for failed login attempts
     const loginKey = `login-${email.toLowerCase()}`;
-    if (!rateLimiter.isAllowed(loginKey, 5, 300000)) { // 5 attempts per 5 minutes
+    if (!rateLimiter.isAllowed(loginKey, 5, 300000)) {
       return { error: new Error('Too many login attempts. Please wait before trying again.') };
     }
 
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       return { error: new Error(emailValidation.error || 'Invalid email') };
     }
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password
-      });
-      
-      if (error) {
-        // Don't reset rate limiter on failed login
-        return { error: new Error(getSafeErrorMessage(error)) };
-      } else {
-        // Reset rate limiter on successful login
-        rateLimiter.reset(loginKey);
-        return { error: null };
-      }
+      await signInWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
+      rateLimiter.reset(loginKey);
+      return { error: null };
     } catch (error) {
       return { error: new Error(getSafeErrorMessage(error)) };
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      await signOut(auth);
+      return { error: null };
+    } catch (error) {
+      return { error: new Error(getSafeErrorMessage(error)) };
+    }
   };
 
   const value = {
     user,
-    session,
     loading,
     subscriptionStatus,
     checkSubscription,

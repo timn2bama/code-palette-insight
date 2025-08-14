@@ -6,28 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navigation from "@/components/Navigation";
 import CreateOutfitDialog from "@/components/CreateOutfitDialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Search, Calendar, Trash2, Edit, Eye, Shirt } from "lucide-react";
+import { db } from "@/integrations/firebase/client";
+import { ref, onValue, remove } from "firebase/database";
 
+// Updated interface for Firebase data structure
 interface OutfitWithItems {
   id: string;
   name: string;
   description: string | null;
   occasion: string | null;
   season: string | null;
-  created_at: string;
-  outfit_items: {
-    id: string;
-    wardrobe_items: {
-      id: string;
+  created_at: string | number;
+  items: {
+    [itemId: string]: {
       name: string;
       category: string;
       color: string | null;
       photo_url: string | null;
-    };
-  }[];
+    }
+  } | null;
 }
 
 const Outfits = () => {
@@ -39,9 +39,38 @@ const Outfits = () => {
   const [seasonFilter, setSeasonFilter] = useState("all");
   const { user } = useAuth();
 
+  const fetchOutfits = () => {
+    if (!user) return;
+    const outfitsRef = ref(db, `outfits/${user.uid}`);
+
+    const unsubscribe = onValue(outfitsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const transformedOutfits = Object.entries(data).map(([id, outfit]) => ({
+          id,
+          ...outfit,
+        }));
+        setOutfits(transformedOutfits.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      } else {
+        setOutfits([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching outfits:', error);
+      toast.error('Failed to load outfits');
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  };
+
   useEffect(() => {
     if (user) {
-      fetchOutfits();
+      const unsubscribe = fetchOutfits();
+      return () => unsubscribe && unsubscribe();
+    } else {
+      setLoading(false);
+      setOutfits([]);
     }
   }, [user]);
 
@@ -66,77 +95,34 @@ const Outfits = () => {
     setFilteredOutfits(filtered);
   }, [searchQuery, occasionFilter, seasonFilter, outfits]);
 
-  const fetchOutfits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('outfits')
-        .select(`
-          id,
-          name,
-          description,
-          occasion,
-          season,
-          created_at,
-          outfit_items (
-            id,
-            wardrobe_items (
-              id,
-              name,
-              category,
-              color,
-              photo_url
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOutfits(data || []);
-    } catch (error) {
-      console.error('Error fetching outfits:', error);
-      toast.error('Failed to load outfits');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const deleteOutfit = async (outfitId: string, outfitName: string) => {
-    if (!confirm(`Are you sure you want to delete "${outfitName}"?`)) return;
+    if (!user || !confirm(`Are you sure you want to delete "${outfitName}"?`)) return;
 
     try {
-      const { error } = await supabase
-        .from('outfits')
-        .delete()
-        .eq('id', outfitId);
-
-      if (error) throw error;
-
+      const outfitRef = ref(db, `outfits/${user.uid}/${outfitId}`);
+      await remove(outfitRef);
       toast.success(`Deleted "${outfitName}"`);
-      fetchOutfits();
+      // Real-time listener will handle UI update
     } catch (error) {
       console.error('Error deleting outfit:', error);
       toast.error('Failed to delete outfit');
     }
   };
 
-  const removeItemFromOutfit = async (outfitItemId: string, itemName: string) => {
+  const removeItemFromOutfit = async (outfitId: string, itemId: string, itemName: string) => {
+    if (!user) return;
     try {
-      const { error } = await supabase
-        .from('outfit_items')
-        .delete()
-        .eq('id', outfitItemId);
-
-      if (error) throw error;
-
+      const itemInOutfitRef = ref(db, `outfits/${user.uid}/${outfitId}/items/${itemId}`);
+      await remove(itemInOutfitRef);
       toast.success(`Removed "${itemName}" from outfit`);
-      fetchOutfits();
+      // Real-time listener will handle UI update
     } catch (error) {
       console.error('Error removing item:', error);
       toast.error('Failed to remove item');
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | number) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -144,9 +130,12 @@ const Outfits = () => {
     });
   };
 
-  // Get unique occasions and seasons for filters
   const occasions = [...new Set(outfits.map(o => o.occasion).filter(Boolean))].sort();
   const seasons = [...new Set(outfits.map(o => o.season).filter(Boolean))].sort();
+
+  const getOutfitItemsArray = (outfit: OutfitWithItems) => {
+    return outfit.items ? Object.entries(outfit.items).map(([id, itemDetails]) => ({ id, ...itemDetails })) : [];
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -198,7 +187,7 @@ const Outfits = () => {
             </SelectContent>
           </Select>
 
-          <CreateOutfitDialog onOutfitCreated={fetchOutfits} />
+          <CreateOutfitDialog onOutfitCreated={() => { /* Real-time now, prop might not be needed */ }} />
         </div>
 
         {/* Analytics Cards */}
@@ -263,12 +252,14 @@ const Outfits = () => {
               }
             </p>
             {outfits.length === 0 && (
-              <CreateOutfitDialog onOutfitCreated={fetchOutfits} />
+              <CreateOutfitDialog onOutfitCreated={() => {}} />
             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {filteredOutfits.map((outfit) => (
+            {filteredOutfits.map((outfit) => {
+              const outfitItemsArray = getOutfitItemsArray(outfit);
+              return (
               <Card key={outfit.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex justify-between items-start mb-4">
@@ -312,21 +303,21 @@ const Outfits = () => {
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Shirt className="h-4 w-4" />
-                      {outfit.outfit_items.length} item{outfit.outfit_items.length !== 1 ? 's' : ''}
+                      {outfitItemsArray.length} item{outfitItemsArray.length !== 1 ? 's' : ''}
                     </div>
                     
-                    {outfit.outfit_items.length > 0 ? (
+                    {outfitItemsArray.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2 max-h-32 overflow-hidden">
-                        {outfit.outfit_items.slice(0, 4).map((outfitItem) => (
+                        {outfitItemsArray.slice(0, 4).map((item) => (
                           <div
-                            key={outfitItem.id}
+                            key={item.id}
                             className="relative group/item bg-secondary/20 rounded-lg p-2 hover:bg-secondary/40 transition-colors"
                           >
                             <div className="flex items-center gap-2">
-                              {outfitItem.wardrobe_items.photo_url ? (
+                              {item.photo_url ? (
                                 <img
-                                  src={outfitItem.wardrobe_items.photo_url}
-                                  alt={outfitItem.wardrobe_items.name}
+                                  src={item.photo_url}
+                                  alt={item.name}
                                   className="w-8 h-8 object-cover rounded"
                                 />
                               ) : (
@@ -336,11 +327,11 @@ const Outfits = () => {
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium truncate">
-                                  {outfitItem.wardrobe_items.name}
+                                  {item.name}
                                 </p>
-                                {outfitItem.wardrobe_items.color && (
+                                {item.color && (
                                   <p className="text-xs text-muted-foreground">
-                                    {outfitItem.wardrobe_items.color}
+                                    {item.color}
                                   </p>
                                 )}
                               </div>
@@ -348,17 +339,17 @@ const Outfits = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeItemFromOutfit(outfitItem.id, outfitItem.wardrobe_items.name)}
+                              onClick={() => removeItemFromOutfit(outfit.id, item.id, item.name)}
                               className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover/item:opacity-100 transition-opacity text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                         ))}
-                        {outfit.outfit_items.length > 4 && (
+                        {outfitItemsArray.length > 4 && (
                           <div className="bg-secondary/20 rounded-lg p-2 flex items-center justify-center">
                             <span className="text-xs text-muted-foreground">
-                              +{outfit.outfit_items.length - 4} more
+                              +{outfitItemsArray.length - 4} more
                             </span>
                           </div>
                         )}
@@ -382,7 +373,7 @@ const Outfits = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
         )}
       </div>

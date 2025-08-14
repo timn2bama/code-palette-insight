@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/integrations/firebase/client";
+import { ref, get, push, serverTimestamp } from "firebase/database";
 
 interface WardrobeItem {
   id: string;
@@ -29,13 +30,17 @@ export const useOutfitRecommendations = () => {
 
     setLoading(true);
     try {
-      const { data: wardrobeItems, error } = await supabase
-        .from('wardrobe_items')
-        .select('*');
+      const wardrobeRef = ref(db, `wardrobe_items/${user.uid}`);
+      const snapshot = await get(wardrobeRef);
 
-      if (error) throw error;
+      let wardrobeItems: WardrobeItem[] = [];
+      if (snapshot.exists()) {
+        wardrobeItems = Object.entries(snapshot.val()).map(([id, item]) => ({
+          id,
+          ...item as Omit<WardrobeItem, 'id'>
+        }));
+      }
 
-      // Simple outfit recommendation algorithm
       const outfitSuggestions = generateOutfitCombinations(wardrobeItems, baseItem);
       setSuggestions(outfitSuggestions);
     } catch (error) {
@@ -51,78 +56,42 @@ export const useOutfitRecommendations = () => {
   ): OutfitSuggestion[] => {
     const suggestions: OutfitSuggestion[] = [];
     
-    // Group items by category
     const itemsByCategory = items.reduce((acc, item) => {
       if (!acc[item.category]) acc[item.category] = [];
       acc[item.category].push(item);
       return acc;
     }, {} as Record<string, WardrobeItem[]>);
 
-    // Define outfit templates
     const outfitTemplates = [
-      {
-        name: 'Business Casual',
-        categories: ['tops', 'bottoms', 'shoes'],
-        occasion: 'work',
-        season: 'all seasons',
-        description: 'Professional yet comfortable for the office'
-      },
-      {
-        name: 'Weekend Casual',
-        categories: ['tops', 'bottoms', 'shoes'],
-        occasion: 'casual',
-        season: 'all seasons',
-        description: 'Relaxed and comfortable for weekend activities'
-      },
-      {
-        name: 'Evening Out',
-        categories: ['dresses', 'shoes'],
-        occasion: 'date night',
-        season: 'all seasons',
-        description: 'Elegant look for dinner or entertainment'
-      },
-      {
-        name: 'Layered Look',
-        categories: ['tops', 'outerwear', 'bottoms', 'shoes'],
-        occasion: 'casual',
-        season: 'fall',
-        description: 'Perfect for transitional weather'
-      }
+      { name: 'Business Casual', categories: ['tops', 'bottoms', 'shoes'], occasion: 'work', season: 'all seasons', description: 'Professional yet comfortable' },
+      { name: 'Weekend Casual', categories: ['tops', 'bottoms', 'shoes'], occasion: 'casual', season: 'all seasons', description: 'Relaxed and comfortable' },
+      { name: 'Evening Out', categories: ['dresses', 'shoes'], occasion: 'date night', season: 'all seasons', description: 'Elegant look for dinner' },
+      { name: 'Layered Look', categories: ['tops', 'outerwear', 'bottoms', 'shoes'], occasion: 'casual', season: 'fall', description: 'Perfect for transitional weather' }
     ];
 
-    // Generate combinations based on templates
     outfitTemplates.forEach((template, index) => {
       const outfitItems: WardrobeItem[] = [];
       let matchScore = 100;
 
-      // If we have a base item, start with that
       if (baseItem) {
         outfitItems.push(baseItem);
-        // Reduce match score if base item doesn't fit template
         if (!template.categories.includes(baseItem.category)) {
           matchScore -= 20;
         }
       }
 
-      // Fill remaining categories
       template.categories.forEach(category => {
         const categoryItems = itemsByCategory[category] || [];
-        
-        // Skip if we already have an item from this category (from base item)
         if (baseItem && baseItem.category === category) return;
 
         if (categoryItems.length > 0) {
-          // Simple selection: pick first available item
-          // In a real app, this would be more sophisticated (color matching, style compatibility, etc.)
           const selectedItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
           outfitItems.push(selectedItem);
         } else {
-          // Reduce score if we can't find items for this category
           matchScore -= 30;
         }
       });
 
-      // Only add suggestion if we have at least 2 items and decent match score
       if (outfitItems.length >= 2 && matchScore >= 50) {
         suggestions.push({
           id: `suggestion-${index}`,
@@ -135,7 +104,6 @@ export const useOutfitRecommendations = () => {
       }
     });
 
-    // Sort by match score
     return suggestions.sort((a, b) => b.matchScore - a.matchScore).slice(0, 6);
   };
 
@@ -143,34 +111,27 @@ export const useOutfitRecommendations = () => {
     if (!user) return;
 
     try {
-      // Create the outfit
-      const { data: outfit, error: outfitError } = await supabase
-        .from('outfits')
-        .insert({
-          user_id: user.id,
-          name,
-          description: suggestion.description,
-          occasion: suggestion.occasion,
-          season: suggestion.season
-        })
-        .select()
-        .single();
+      const outfitsRef = ref(db, `outfits/${user.uid}`);
+      const newOutfit = {
+        user_id: user.uid,
+        name,
+        description: suggestion.description,
+        occasion: suggestion.occasion,
+        season: suggestion.season,
+        created_at: serverTimestamp(),
+        items: suggestion.items.reduce((acc, item) => {
+          acc[item.id] = {
+            name: item.name,
+            category: item.category,
+            color: item.color,
+            photo_url: item.photo_url
+          };
+          return acc;
+        }, {} as { [key: string]: any })
+      };
 
-      if (outfitError) throw outfitError;
-
-      // Add items to the outfit
-      const outfitItems = suggestion.items.map(item => ({
-        outfit_id: outfit.id,
-        wardrobe_item_id: item.id
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('outfit_items')
-        .insert(outfitItems);
-
-      if (itemsError) throw itemsError;
-
-      return outfit;
+      await push(outfitsRef, newOutfit);
+      return newOutfit;
     } catch (error) {
       console.error('Error creating outfit from suggestion:', error);
       throw error;

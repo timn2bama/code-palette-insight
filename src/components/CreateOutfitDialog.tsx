@@ -6,11 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { validateTextInput, getSafeErrorMessage, rateLimiter } from "@/lib/security";
-import { useAuditLog } from "@/hooks/useAuditLog";
+import { db } from "@/integrations/firebase/client";
+import { ref, push, serverTimestamp, get } from "firebase/database";
+// import { useAuditLog } from "@/hooks/useAuditLog"; // Temporarily disabled
 
 interface CreateOutfitDialogProps {
   onOutfitCreated?: () => void;
@@ -35,13 +36,12 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
     season: ""
   });
   const { user } = useAuth();
-  const { logEvent } = useAuditLog();
+  // const { logEvent } = useAuditLog(); // Temporarily disabled
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !formData.name.trim()) return;
 
-    // Rate limiting check
     if (!rateLimiter.isAllowed('outfit-creation', 20, 60000)) {
       toast.error('Too many requests. Please wait a moment before creating another outfit.');
       return;
@@ -49,55 +49,45 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
 
     setLoading(true);
     try {
-      // Validate and sanitize inputs
       const nameValidation = validateTextInput(formData.name, 'name');
       const descriptionValidation = validateTextInput(formData.description, 'description');
 
-      if (!nameValidation.isValid) {
-        toast.error(nameValidation.error || 'Invalid outfit name');
+      if (!nameValidation.isValid || !descriptionValidation.isValid) {
+        toast.error('Invalid input. Please check the fields.');
+        setLoading(false);
         return;
       }
 
-      if (!descriptionValidation.isValid) {
-        toast.error(descriptionValidation.error || 'Invalid description');
-        return;
-      }
-      const { data: outfit, error: outfitError } = await supabase
-        .from('outfits')
-        .insert({
-          user_id: user.id,
-          name: nameValidation.sanitized,
-          description: descriptionValidation.sanitized || null,
-          occasion: formData.occasion || null,
-          season: formData.season || null
-        })
-        .select()
-        .single();
-
-      if (outfitError) throw outfitError;
-
-      // If there's an initial item, add it to the outfit
-      if (initialItem && outfit) {
-        const { error: itemError } = await supabase
-          .from('outfit_items')
-          .insert({
-            outfit_id: outfit.id,
-            wardrobe_item_id: initialItem.id
-          });
-
-        if (itemError) throw itemError;
-      }
-
-      // Log the creation for audit purposes
-      await logEvent({
-        event_type: 'outfit_created',
-        details: {
-          outfit_name: nameValidation.sanitized,
-          occasion: formData.occasion,
-          season: formData.season,
-          has_initial_item: !!initialItem
+      let initialItemData = {};
+      if (initialItem) {
+        const itemRef = ref(db, `wardrobe_items/${user.uid}/${initialItem.id}`);
+        const snapshot = await get(itemRef);
+        if (snapshot.exists()) {
+          const item = snapshot.val();
+          initialItemData = {
+            [initialItem.id]: {
+              name: item.name,
+              category: item.category,
+              color: item.color,
+              photo_url: item.photo_url,
+            }
+          };
         }
+      }
+
+      const outfitsRef = ref(db, `outfits/${user.uid}`);
+      await push(outfitsRef, {
+        user_id: user.uid,
+        name: nameValidation.sanitized,
+        description: descriptionValidation.sanitized || null,
+        occasion: formData.occasion || null,
+        season: formData.season || null,
+        created_at: serverTimestamp(),
+        items: initialItemData
       });
+
+      // NOTE: Audit log temporarily disabled
+      // await logEvent({ ... });
 
       toast.success(`Outfit "${formData.name}" created successfully!`);
       setFormData({ name: "", description: "", occasion: "", season: "" });

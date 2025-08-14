@@ -6,11 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Image, AlertCircle, Crown } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { storage, db } from "@/integrations/firebase/client";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as dbRef, push, serverTimestamp } from "firebase/database";
 import { useToast } from "@/hooks/use-toast";
 import { validateTextInput, validateImageFile, getSafeErrorMessage, rateLimiter } from "@/lib/security";
-import { useAuditLog } from "@/hooks/useAuditLog";
-import { useUploadLimits } from "@/hooks/useUploadLimits";
+// NOTE: Audit log and upload limits are temporarily disabled during migration.
+// import { useAuditLog } from "@/hooks/useAuditLog";
+// import { useUploadLimits } from "@/hooks/useUploadLimits";
 
 interface AddWardrobeItemDialogProps {
   onItemAdded: () => void;
@@ -22,8 +26,10 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
-  const { logEvent } = useAuditLog();
-  const { canUploadToCategory, getCategoryUsage, uploadLimits, refreshLimits } = useUploadLimits();
+  const { user } = useAuth();
+  // NOTE: The following hooks are temporarily disabled.
+  // const { logEvent } = useAuditLog();
+  // const { canUploadToCategory, getCategoryUsage, uploadLimits, refreshLimits } = useUploadLimits();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,14 +49,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       const img = new window.Image();
       
       img.onload = () => {
-        console.log('Original image dimensions:', img.width, 'x', img.height);
-        
-        // Very aggressive compression for phone cameras
-        // Max 800px to ensure it stays under limits
         const maxSize = 800;
         let { width, height } = img;
         
-        // Always resize if either dimension is over maxSize
         if (width > maxSize || height > maxSize) {
           if (width > height) {
             height = (height * maxSize) / width;
@@ -61,23 +62,19 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
           }
         }
         
-        console.log('Compressed image dimensions:', width, 'x', height);
-        
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress with much lower quality for smaller files
         ctx?.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (blob) {
-            console.log('Blob size after compression:', blob.size, 'bytes');
             const compressedFile = new File([blob], file.name, {
               type: 'image/jpeg',
               lastModified: Date.now(),
             });
             resolve(compressedFile);
           }
-        }, 'image/jpeg', 0.5); // Much lower quality for smaller file size
+        }, 'image/jpeg', 0.5);
       };
       
       img.src = URL.createObjectURL(file);
@@ -88,7 +85,6 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file type first
     if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
       toast({
         title: "Invalid file type",
@@ -100,21 +96,16 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
 
     let processedFile = file;
     
-    // Always compress images from phone cameras (typically > 2MB) or large images
     if (file.size > 2 * 1024 * 1024) {
-      console.log('Original file size:', file.size, 'bytes');
       toast({
         title: "Compressing image...",
         description: "Optimizing image for upload",
       });
       processedFile = await compressImage(file);
-      console.log('Compressed file size:', processedFile.size, 'bytes');
     }
 
-    // Final validation on compressed file
     const fileValidation = validateImageFile(processedFile);
     if (!fileValidation.isValid) {
-      console.error('File validation failed:', fileValidation.error);
       toast({
         title: "Invalid file",
         description: fileValidation.error,
@@ -122,8 +113,6 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       });
       return;
     }
-
-    console.log('File passed validation, setting as selected file');
 
     setSelectedFile(processedFile);
     const reader = new FileReader();
@@ -138,7 +127,6 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     setLoading(true);
 
     try {
-      // Rate limiting check
       if (!rateLimiter.isAllowed('wardrobe-item-creation', 10, 60000)) {
         toast({
           title: "Too many requests",
@@ -149,7 +137,6 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Authentication required",
@@ -159,108 +146,57 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         return;
       }
 
-      // Check upload limits for selected category
-      if (!canUploadToCategory(formData.category)) {
-        const usage = getCategoryUsage(formData.category);
-        toast({
-          title: "Upload limit reached",
-          description: `You can only upload ${usage.limit} items per category on the free plan. Upgrade to Premium for unlimited uploads.`,
-          variant: "destructive",
-        });
-        return;
-      }
+      // NOTE: Upload limits are temporarily disabled.
+      // if (!canUploadToCategory(formData.category)) { ... }
 
-      // Validate and sanitize inputs
       const nameValidation = validateTextInput(formData.name, 'name');
       const colorValidation = validateTextInput(formData.color, 'color');
       const brandValidation = validateTextInput(formData.brand, 'brand');
 
-      if (!nameValidation.isValid) {
-        toast({
-          title: "Invalid name",
-          description: nameValidation.error,
-          variant: "destructive",
-        });
+      if (!nameValidation.isValid || !colorValidation.isValid || !brandValidation.isValid) {
+        toast({ title: "Invalid input", description: "Please check your form fields.", variant: "destructive" });
         return;
       }
 
-      if (!colorValidation.isValid) {
-        toast({
-          title: "Invalid color",
-          description: colorValidation.error,
-          variant: "destructive",
-        });
-        return;
-      }
+      let photo_url = null;
 
-      if (!brandValidation.isValid) {
-        toast({
-          title: "Invalid brand",
-          description: brandValidation.error,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      let photoUrl = null;
-
-      // Upload photo if selected
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const fileName = `${user.uid}/${Date.now()}.${fileExt}`;
+        const imageRef = storageRef(storage, `wardrobe-photos/${fileName}`);
         
-        const { error: uploadError } = await supabase.storage
-          .from('wardrobe-photos')
-          .upload(fileName, selectedFile);
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('wardrobe-photos')
-          .getPublicUrl(fileName);
-        
-        photoUrl = publicUrl;
+        await uploadBytes(imageRef, selectedFile);
+        photo_url = await getDownloadURL(imageRef);
       }
 
-      // Insert wardrobe item with sanitized data
-      const { error: insertError } = await supabase
-        .from('wardrobe_items')
-        .insert({
-          name: nameValidation.sanitized,
-          category: formData.category,
-          color: colorValidation.sanitized || null,
-          brand: brandValidation.sanitized || null,
-          photo_url: photoUrl,
-          user_id: user.id,
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      // Log the creation for audit purposes
-      await logEvent({
-        event_type: 'wardrobe_item_created',
-        details: {
-          item_name: nameValidation.sanitized,
-          category: formData.category,
-          has_photo: !!photoUrl
-        }
+      const itemsRef = dbRef(db, `wardrobe_items/${user.uid}`);
+      await push(itemsRef, {
+        name: nameValidation.sanitized,
+        category: formData.category,
+        color: colorValidation.sanitized || null,
+        brand: brandValidation.sanitized || null,
+        photo_url,
+        user_id: user.uid,
+        wear_count: 0,
+        last_worn: null,
+        purchase_date: null,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       });
+
+      // NOTE: Audit log is temporarily disabled.
+      // await logEvent({ ... });
 
       toast({
         title: "Success!",
         description: "Item added to your wardrobe.",
       });
 
-      // Reset form
       setFormData({ name: "", category: "", color: "", brand: "" });
       setSelectedFile(null);
       setPreviewUrl(null);
       setOpen(false);
-      refreshLimits(); // Refresh limits after successful upload
+      // refreshLimits(); // Temporarily disabled
       onItemAdded();
 
     } catch (error) {
@@ -355,40 +291,16 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => {
-                  const usage = getCategoryUsage(category);
-                  const isAtLimit = !canUploadToCategory(category);
-                  return (
-                    <SelectItem key={category} value={category} disabled={isAtLimit}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                        {!uploadLimits.isUnlimited && (
-                          <span className={`text-xs ml-2 ${isAtLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
-                            {usage.used}/{usage.limit}
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {formData.category && !uploadLimits.isUnlimited && (
-              <div className="text-xs text-muted-foreground">
-                {(() => {
-                  const usage = getCategoryUsage(formData.category);
-                  return `${usage.used}/${usage.limit} items used in this category`;
-                })()}
-              </div>
-            )}
-            {!uploadLimits.isUnlimited && (
-              <Alert>
-                <Crown className="h-4 w-4" />
-                <AlertDescription>
-                  Free plan: 4 items per category. <strong>Upgrade to Premium for unlimited uploads!</strong>
-                </AlertDescription>
-              </Alert>
-            )}
+            {/* NOTE: Upload limit UI is temporarily disabled */}
           </div>
 
           {/* Color */}

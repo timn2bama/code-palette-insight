@@ -201,9 +201,16 @@ export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
   'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-  'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+  'img-src': ["'self'", 'data:', 'https:', 'blob:', 'https://firebasestorage.googleapis.com'],
   'font-src': ["'self'", 'https://fonts.gstatic.com'],
-  'connect-src': ["'self'", 'https://oikpwuraixlnjvyrmnwx.supabase.co', 'https://api.weatherapi.com'],
+  'connect-src': [
+    "'self'",
+    'https://api.weatherapi.com',
+    'https://www.googleapis.com',
+    'https://securetoken.googleapis.com',
+    'https://syncstyle-9414d-default-rtdb.firebaseio.com',
+    'https://*.cloudfunctions.net'
+  ],
   'frame-src': ["'none'"],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],

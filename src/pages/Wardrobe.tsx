@@ -8,11 +8,12 @@ import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
 import ViewDetailsDialog from "@/components/ViewDetailsDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Shirt, Plus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { db } from "@/integrations/firebase/client";
+import { ref, onValue, update, serverTimestamp } from "firebase/database";
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -20,39 +21,48 @@ const Wardrobe = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  // This is the new fetch function for Firebase
+  const fetchWardrobeItems = () => {
+    if (!user) return;
+    const itemsRef = ref(db, `wardrobe_items/${user.uid}`);
+
+    // Using onValue for real-time updates
+    const unsubscribe = onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const transformedItems = Object.entries(data).map(([id, item]) => ({
+          id,
+          ...item,
+          wearCount: item.wear_count || 0,
+          lastWorn: item.last_worn ? formatDate(item.last_worn) : 'Never'
+        }));
+        setClothingItems(transformedItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      } else {
+        setClothingItems([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching wardrobe items:', error);
+      toast.error('Failed to load wardrobe items');
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  };
+
   useEffect(() => {
+    // The listener is set up here and cleaned up on unmount
     if (user) {
-      fetchWardrobeItems();
+      const unsubscribe = fetchWardrobeItems();
+      return () => unsubscribe && unsubscribe();
+    } else {
+      setLoading(false);
+      setClothingItems([]);
     }
   }, [user]);
 
-  const fetchWardrobeItems = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Transform data to match expected format
-      const transformedItems = data.map(item => ({
-        ...item,
-        wearCount: item.wear_count || 0,
-        lastWorn: item.last_worn ? formatDate(item.last_worn) : 'Never'
-      }));
-
-      setClothingItems(transformedItems);
-    } catch (error) {
-      console.error('Error fetching wardrobe items:', error);
-      toast.error('Failed to load wardrobe items');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateStringOrTimestamp: string | number) => {
+    const date = new Date(dateStringOrTimestamp);
     const now = new Date();
     const diffTime = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -65,36 +75,30 @@ const Wardrobe = () => {
   };
 
   const markAsWorn = async (itemId: string, itemName: string) => {
+    if (!user) return;
     try {
-      const { error } = await supabase
-        .from('wardrobe_items')
-        .update({ 
-          wear_count: clothingItems.find(item => item.id === itemId)?.wearCount + 1 || 1,
-          last_worn: new Date().toISOString()
-        })
-        .eq('id', itemId);
-
-      if (error) throw error;
-
+      const itemRef = ref(db, `wardrobe_items/${user.uid}/${itemId}`);
+      const currentItem = clothingItems.find(item => item.id === itemId);
+      await update(itemRef, {
+        wear_count: (currentItem?.wearCount || 0) + 1,
+        last_worn: serverTimestamp() // Use server timestamp for consistency
+      });
       toast.success(`Marked "${itemName}" as worn today!`);
-      fetchWardrobeItems(); // Refresh the data
+      // No need to call fetchWardrobeItems, real-time listener handles it
     } catch (error) {
       console.error('Error marking item as worn:', error);
       toast.error('Failed to mark item as worn');
     }
   };
 
+  // NOTE: Supabase function calls are temporarily disabled.
   const handleResetWardrobe = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('reset-wardrobe');
-      if (error) throw error;
-      toast.success('Wardrobe reset successfully');
-      fetchWardrobeItems();
-    } catch (error) {
-      console.error('Error resetting wardrobe:', error);
-      toast.error('Failed to reset wardrobe');
-    }
+    toast.info("This feature is being migrated and is temporarily unavailable.");
   };
+
+  const handlePopulateSample = async () => {
+    toast.info("This feature is being migrated and is temporarily unavailable.");
+  }
 
   // Calculate categories dynamically
   const categories = [
@@ -110,7 +114,7 @@ const Wardrobe = () => {
     ? clothingItems 
     : clothingItems.filter(item => item.category === selectedCategory);
 
-  const mostWornItems = clothingItems.sort((a, b) => b.wearCount - a.wearCount).slice(0, 3);
+  const mostWornItems = [...clothingItems].sort((a, b) => b.wearCount - a.wearCount).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -286,7 +290,7 @@ const Wardrobe = () => {
                  </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                   <ViewDetailsDialog item={item} onItemUpdated={fetchWardrobeItems}>
+                   <ViewDetailsDialog item={item} onItemUpdated={() => { /* Real-time now, prop might not be needed */ }}>
                      <Button variant="outline" size="sm" className="flex-1">
                        View Details
                      </Button>
@@ -310,24 +314,16 @@ const Wardrobe = () => {
         {/* Add Item Button */}
         <div className="text-center mt-8 space-y-4">
           <div data-add-item-trigger>
-            <AddWardrobeItemDialog onItemAdded={fetchWardrobeItems} />
+            <AddWardrobeItemDialog onItemAdded={() => { /* Real-time now, prop might not be needed */ }} />
           </div>
           
           <div className="border-t pt-4">
             <p className="text-sm text-muted-foreground mb-3">Need sample clothing items to get started?</p>
             <Button 
               variant="outline" 
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('populate-sample-wardrobe');
-                  if (error) throw error;
-                  toast.success('Sample wardrobe populated successfully!');
-                  fetchWardrobeItems();
-                } catch (error) {
-                  toast.error('Failed to populate sample wardrobe');
-                }
-              }}
+              onClick={handlePopulateSample}
               className="mx-2"
+              disabled
             >
               <Plus className="w-4 h-4 mr-2" />
               Populate Sample Wardrobe
@@ -335,7 +331,7 @@ const Wardrobe = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mx-2">
+                <Button variant="destructive" className="mx-2" disabled>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Reset Wardrobe
                 </Button>

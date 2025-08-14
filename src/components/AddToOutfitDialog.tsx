@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import CreateOutfitDialog from "./CreateOutfitDialog";
+import { db } from "@/integrations/firebase/client";
+import { ref, get, update } from "firebase/database";
 
 interface Outfit {
   id: string;
@@ -17,7 +18,7 @@ interface Outfit {
   occasion: string | null;
   season: string | null;
   created_at: string;
-  outfit_items: { wardrobe_item_id: string }[];
+  items: { [itemId: string]: any } | null;
 }
 
 interface ClothingItem {
@@ -59,22 +60,21 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
   }, [searchQuery, outfits]);
 
   const fetchOutfits = async () => {
+    if (!user) return;
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('outfits')
-        .select(`
+      const outfitsRef = ref(db, `outfits/${user.uid}`);
+      const snapshot = await get(outfitsRef);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const transformedOutfits = Object.entries(data).map(([id, outfit]) => ({
           id,
-          name,
-          description,
-          occasion,
-          season,
-          created_at,
-          outfit_items!inner(wardrobe_item_id)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOutfits(data || []);
+          ...outfit as Omit<Outfit, 'id'>,
+        }));
+        setOutfits(transformedOutfits.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      } else {
+        setOutfits([]);
+      }
     } catch (error) {
       console.error('Error fetching outfits:', error);
       toast.error('Failed to load outfits');
@@ -88,27 +88,28 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
 
     setAddingToOutfit(outfitId);
     try {
-      // Check if item is already in outfit
-      const { data: existing } = await supabase
-        .from('outfit_items')
-        .select('id')
-        .eq('outfit_id', outfitId)
-        .eq('wardrobe_item_id', item.id)
-        .single();
-
-      if (existing) {
+      if (isItemInOutfit(outfits.find(o => o.id === outfitId)!)) {
         toast.info('Item is already in this outfit');
         return;
       }
 
-      const { error } = await supabase
-        .from('outfit_items')
-        .insert({
-          outfit_id: outfitId,
-          wardrobe_item_id: item.id
-        });
+      // Get the full wardrobe item details to denormalize
+      const wardrobeItemRef = ref(db, `wardrobe_items/${user.uid}/${item.id}`);
+      const snapshot = await get(wardrobeItemRef);
+      if (!snapshot.exists()) {
+        throw new Error("Could not find the wardrobe item to add.");
+      }
+      const itemDetails = snapshot.val();
 
-      if (error) throw error;
+      const outfitItemsRef = ref(db, `outfits/${user.uid}/${outfitId}/items`);
+      await update(outfitItemsRef, {
+        [item.id]: {
+          name: itemDetails.name,
+          category: itemDetails.category,
+          color: itemDetails.color,
+          photo_url: itemDetails.photo_url,
+        }
+      });
 
       const outfit = outfits.find(o => o.id === outfitId);
       toast.success(`Added "${item.name}" to "${outfit?.name}"`);
@@ -122,7 +123,7 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
   };
 
   const isItemInOutfit = (outfit: Outfit) => {
-    return outfit.outfit_items.some(oi => oi.wardrobe_item_id === item.id);
+    return outfit.items && outfit.items[item.id];
   };
 
   return (
@@ -199,7 +200,7 @@ const AddToOutfitDialog = ({ item, children }: AddToOutfitDialogProps) => {
                            )}
                          </div>
                          <p className="text-xs text-muted-foreground mt-2">
-                           {outfit.outfit_items.length} item{outfit.outfit_items.length !== 1 ? 's' : ''}
+                           {outfit.items ? Object.keys(outfit.items).length : 0} item{outfit.items && Object.keys(outfit.items).length !== 1 ? 's' : ''}
                          </p>
                        </div>
                        

@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Sparkles, Image } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { db } from "@/integrations/firebase/client";
+import { ref, get, push, serverTimestamp } from "firebase/database";
 
 interface WardrobeItem {
   id: string;
@@ -54,14 +55,18 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
   }, [weatherSuggestions, wardrobeItems]);
 
   const fetchWardrobeItems = async () => {
+    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .select('id, name, category, color, photo_url')
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-      setWardrobeItems(data || []);
+      const itemsRef = ref(db, `wardrobe_items/${user.uid}`);
+      const snapshot = await get(itemsRef);
+      if (snapshot.exists()) {
+        const items = snapshot.val();
+        const itemsArray = Object.entries(items).map(([id, itemData]) => ({
+          id,
+          ...(itemData as any),
+        }));
+        setWardrobeItems(itemsArray);
+      }
     } catch (error) {
       console.error('Error fetching wardrobe items:', error);
     }
@@ -114,35 +119,26 @@ export const OutfitSuggestions = ({ weatherSuggestions }: OutfitSuggestionsProps
 
     setIsCreating(true);
     try {
-      const { data: outfitData, error: outfitError } = await supabase
-        .from('outfits')
-        .insert({
-          name: outfitName,
-          description: outfitDescription || `Weather-suggested outfit for ${selectedSuggestion.weather}`,
-          occasion: 'weather-suggested',
-          season: getSeasonFromTemp(selectedSuggestion.weather),
-          user_id: user.id
-        })
-        .select()
-        .single();
+      const outfitsRef = ref(db, `outfits/${user.uid}`);
+      const newOutfit = {
+        name: outfitName,
+        description: outfitDescription || `Weather-suggested outfit for ${selectedSuggestion.weather}`,
+        occasion: 'weather-suggested',
+        season: getSeasonFromTemp(selectedSuggestion.weather),
+        user_id: user.uid,
+        created_at: serverTimestamp(),
+        items: selectedSuggestion.wardrobeItems?.reduce((acc, item) => {
+          acc[item.id] = {
+            name: item.name,
+            category: item.category,
+            color: item.color,
+            photo_url: item.photo_url,
+          };
+          return acc;
+        }, {} as { [key: string]: any }) || null,
+      };
 
-      if (outfitError) throw outfitError;
-
-      // Add wardrobe items to the outfit if any were matched
-      if (selectedSuggestion.wardrobeItems && selectedSuggestion.wardrobeItems.length > 0) {
-        const outfitItems = selectedSuggestion.wardrobeItems.map(item => ({
-          outfit_id: outfitData.id,
-          wardrobe_item_id: item.id
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('outfit_items')
-          .insert(outfitItems);
-
-        if (itemsError) {
-          console.error('Error adding items to outfit:', itemsError);
-        }
-      }
+      await push(outfitsRef, newOutfit);
 
       toast.success(`Outfit "${outfitName}" created successfully!`);
       setDialogOpen(false);

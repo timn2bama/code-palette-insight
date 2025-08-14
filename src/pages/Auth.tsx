@@ -44,7 +44,8 @@ const Auth = () => {
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success("Account created! Please check your email to confirm your account.");
+          toast.success("Account created successfully! You can now sign in.");
+          setIsSignUp(false); // Switch to sign-in view
         }
       } else {
         const { error } = await signIn(data.email, data.password);

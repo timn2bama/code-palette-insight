@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { app } from "@/integrations/firebase/client"; // Assuming 'app' is exported from your firebase client
 
 interface CurrentWeather {
   temperature: number;
@@ -42,7 +43,7 @@ export const useWeatherData = () => {
 
   const fetchWeatherData = async () => {
     setWeatherLoading(true);
-    
+
     if (!navigator.geolocation) {
       toast({
         title: "Error",
@@ -58,20 +59,12 @@ export const useWeatherData = () => {
         const { latitude, longitude } = position.coords;
         
         try {
-          const { data, error } = await supabase.functions.invoke('get-weather', {
-            body: { latitude, longitude }
-          });
+          const functions = getFunctions(app);
+          const getWeather = httpsCallable(functions, 'getWeather');
+          const response = await getWeather({ latitude, longitude });
           
-          if (error) {
-            console.error('Weather API error:', error);
-            toast({
-              title: "Weather Error",
-              description: "Failed to fetch weather data.",
-              variant: "destructive",
-            });
-            return;
-          }
-          
+          const data = response.data as any; // Cast to any to access properties
+
           if (data) {
             setCurrentWeather({
               ...data.current,
@@ -124,7 +117,7 @@ export const useWeatherData = () => {
 
   const fetchAllWeatherData = async () => {
     setWeatherLoading(true);
-    
+
     if (!navigator.geolocation) {
       toast({
         title: "Error",
@@ -140,7 +133,6 @@ export const useWeatherData = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           
-          // Define multiple locations to fetch weather for
           const locations = [
             { latitude, longitude, name: "Current Location" },
             { latitude: 40.7128, longitude: -74.0060, name: "New York" },
@@ -151,24 +143,12 @@ export const useWeatherData = () => {
           ];
           
           try {
-            const { data, error } = await supabase.functions.invoke('get-weather-multiple', {
-              body: { locations }
-            });
-            
-            if (error) {
-              console.error('Weather API error:', error);
-              toast({
-                title: "Weather Error",
-                description: "Failed to fetch weather data.",
-                variant: "destructive",
-              });
-              setWeatherLoading(false);
-              reject(error);
-              return;
-            }
-            
+            const functions = getFunctions(app);
+            const getWeatherMultiple = httpsCallable(functions, 'getWeatherMultiple');
+            const response = await getWeatherMultiple({ locations });
+            const data = response.data as any;
+
             if (data && data.locations) {
-              // Set current weather from the first location (current location)
               const currentLocationData = data.locations.find((loc: any) => loc.location === "Current Location");
               if (currentLocationData && !currentLocationData.error) {
                 setCurrentWeather({
@@ -177,16 +157,16 @@ export const useWeatherData = () => {
                 });
                 setForecast(currentLocationData.forecast);
               }
-              
               setWeatherLoading(false);
               resolve(data.locations);
+            } else {
+              throw new Error("Invalid data format from weather function");
             }
-            
           } catch (error) {
-            console.error('Error fetching weather:', error);
+            console.error('Error fetching multiple weather:', error);
             toast({
               title: "Weather Error",
-              description: "Failed to get weather information.",
+              description: "Failed to get weather information for multiple locations.",
               variant: "destructive",
             });
             setWeatherLoading(false);
@@ -194,34 +174,18 @@ export const useWeatherData = () => {
           }
         },
         (error) => {
+          // Geolocation error handling remains the same
           let errorMessage = "Unable to retrieve your location.";
-          
           switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = "Location access denied. Please enable location permissions.";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable.";
-              break;
-            case error.TIMEOUT:
-              errorMessage = "Location request timed out.";
-              break;
+            case error.PERMISSION_DENIED: errorMessage = "Location access denied."; break;
+            case error.POSITION_UNAVAILABLE: errorMessage = "Location information is unavailable."; break;
+            case error.TIMEOUT: errorMessage = "Location request timed out."; break;
           }
-          
-          toast({
-            title: "Location Error",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          
+          toast({ title: "Location Error", description: errorMessage, variant: "destructive" });
           setWeatherLoading(false);
           reject(new Error(errorMessage));
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     });
   };
