@@ -16,7 +16,7 @@ interface BlogPost {
   published_at: string;
   tags: string[] | null;
   featured_image_url: string | null;
-  author_id: string;
+  author_name: string;
 }
 
 export default function Blog() {
@@ -31,7 +31,7 @@ export default function Blog() {
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from('blog_posts')
+        .from('public_blog_posts')
         .select(`
           id,
           title,
@@ -40,7 +40,7 @@ export default function Blog() {
           published_at,
           tags,
           featured_image_url,
-          author_id
+          author_name
         `)
         .eq('published', true)
         .order('published_at', { ascending: false });
@@ -119,7 +119,7 @@ export default function Blog() {
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="w-4 h-4" />
-                      <span>SyncStyle Team</span>
+                      <span>{post.author_name || 'Anonymous'}</span>
                     </div>
                   </div>
                 </CardHeader>

@@ -710,7 +710,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_blog_posts: {
+        Row: {
+          author_name: string | null
+          content: string | null
+          created_at: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string | null
+          published: boolean | null
+          published_at: string | null
+          slug: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_member: {
