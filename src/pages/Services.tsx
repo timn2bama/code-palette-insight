@@ -209,17 +209,28 @@ const Services = () => {
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
     console.log('🗺️ Maps URL:', mapsUrl);
     
-    // Open in new tab/window
+    // Try to open in new tab/window
     const result = window.open(mapsUrl, '_blank');
-    console.log('🗺️ Window.open result:', result);
     
-    if (!result) {
-      console.warn('⚠️ Popup blocked or failed to open');
-      toast({
-        title: "Popup Blocked",
-        description: "Please allow popups for this site to open directions in Google Maps.",
-        variant: "destructive",
-      });
+    // If popup blocked, offer alternative
+    if (!result || result.closed || typeof result.closed === 'undefined') {
+      console.warn('⚠️ Popup blocked, offering alternatives');
+      
+      // Try to copy URL to clipboard as fallback
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(mapsUrl).then(() => {
+          toast({
+            title: "Directions Link Copied",
+            description: "The Google Maps link has been copied to your clipboard. Paste it in a new tab to open directions.",
+          });
+        }).catch(() => {
+          // Final fallback - open in same tab
+          window.location.href = mapsUrl;
+        });
+      } else {
+        // No clipboard support, open in same tab
+        window.location.href = mapsUrl;
+      }
     }
   };
 
