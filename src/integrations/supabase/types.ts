@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -184,6 +184,80 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          funnel_id: string
+          id: string
+          is_home: boolean
+          path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          funnel_id: string
+          id?: string
+          is_home?: boolean
+          path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          is_home?: boolean
+          path?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_pages_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          settings: Json
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          settings?: Json
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          settings?: Json
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       key_rotations: {
         Row: {
           api_key_id: string
@@ -346,6 +420,42 @@ export type Database = {
           service_data?: Json
           service_name?: string
           service_phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_tweets: {
+        Row: {
+          created_at: string
+          id: string
+          recurrence: Database["public"]["Enums"]["recurrence_frequency"]
+          scheduled_at: string | null
+          task_title: string
+          tweet_text: string
+          tweet_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recurrence?: Database["public"]["Enums"]["recurrence_frequency"]
+          scheduled_at?: string | null
+          task_title: string
+          tweet_text: string
+          tweet_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recurrence?: Database["public"]["Enums"]["recurrence_frequency"]
+          scheduled_at?: string | null
+          task_title?: string
+          tweet_text?: string
+          tweet_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -603,10 +713,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_member: {
+        Args: { _team_id: string }
+        Returns: boolean
+      }
+      is_team_admin: {
+        Args: { _team_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      recurrence_frequency: "none" | "daily" | "weekly" | "monthly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -733,6 +850,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      recurrence_frequency: ["none", "daily", "weekly", "monthly"],
+    },
   },
 } as const
