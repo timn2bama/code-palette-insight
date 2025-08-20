@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, Clock } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
@@ -59,7 +60,14 @@ export default function Blog() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <SEO 
+        title="SyncStyle Blog - Fashion & Style Insights"
+        description="Weekly insights on fashion, style, and wardrobe management. Discover tips for organizing your closet, creating outfits, and staying stylish."
+        keywords="fashion blog, style tips, wardrobe management, outfit ideas, fashion insights, style advice"
+        url="/blog"
+      />
+      <div className="container mx-auto px-4 py-8">
       <Button asChild variant="ghost" className="mb-6">
         <Link to="/">
           ← Back to Main Menu
@@ -109,13 +117,13 @@ export default function Blog() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>
-                        {new Date().toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
+                       <span>
+                         {new Date(post.published_at).toLocaleDateString('en-US', {
+                           year: 'numeric',
+                           month: 'long',
+                           day: 'numeric'
+                         })}
+                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="w-4 h-4" />
@@ -147,6 +155,7 @@ export default function Blog() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

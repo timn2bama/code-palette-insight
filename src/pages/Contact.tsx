@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 import { Mail, MessageSquare, HelpCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,8 +38,15 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="Contact SyncStyle Support - Get Help & Send Feedback"
+        description="Contact SyncStyle support team for technical help, account issues, feature requests, or general inquiries. We respond within 24 hours."
+        keywords="contact syncstyle, customer support, help center, technical support, feedback, wardrobe app support"
+        url="/contact"
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-4xl mx-auto">
@@ -188,7 +196,8 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

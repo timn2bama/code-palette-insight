@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowLeft } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SEO from "@/components/SEO";
+import { generateBlogPostJsonLd } from "@/utils/seo";
 
 interface BlogPost {
   id: string;
@@ -60,7 +62,14 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <>
+        <SEO 
+          title="Post Not Found - SyncStyle Blog"
+          description="The blog post you're looking for could not be found. Browse our latest fashion and style insights on the SyncStyle blog."
+          url={`/blog/${slug}`}
+          noindex={true}
+        />
+        <div className="container mx-auto px-4 py-8">
         <Card>
           <CardContent className="py-8 text-center">
             <h1 className="text-2xl font-bold mb-2">Post Not Found</h1>
@@ -75,12 +84,26 @@ export default function BlogPost() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <>
+      <SEO 
+        title={`${post.title} - SyncStyle Blog`}
+        description={post.content.substring(0, 160).replace(/<[^>]*>/g, '')}
+        keywords={post.tags?.join(', ') || 'fashion, style, wardrobe'}
+        url={`/blog/${slug}`}
+        type="article"
+        publishedTime={post.published_at}
+        author={post.author_name}
+        tags={post.tags || []}
+        image={post.featured_image_url || undefined}
+        jsonLd={generateBlogPostJsonLd({ ...post, slug: slug! })}
+      />
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Button asChild variant="ghost" className="mb-6">
         <Link to="/blog">
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -106,7 +129,7 @@ export default function BlogPost() {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               <span>
-                {new Date().toLocaleDateString('en-US', {
+                {new Date(post.published_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
@@ -136,6 +159,7 @@ export default function BlogPost() {
           />
         </div>
       </article>
-    </div>
+      </div>
+    </>
   );
 }

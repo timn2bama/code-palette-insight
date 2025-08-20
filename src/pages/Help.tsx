@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 import { Search, HelpCircle, BookOpen, Settings, Smartphone, Shield } from "lucide-react";
 import { PrivacyControls } from "@/components/PrivacyControls";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateFAQJsonLd } from "@/utils/seo";
 
 const Help = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,8 +111,16 @@ const Help = () => {
   })).filter(category => category.faqs.length > 0);
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="SyncStyle Help Center - FAQ & Support"
+        description="Find answers to common questions about wardrobe management, outfit creation, weather integration, and account settings in our comprehensive help center."
+        keywords="syncstyle help, faq, wardrobe management help, outfit creator guide, weather integration, account support"
+        url="/help"
+        jsonLd={generateFAQJsonLd()}
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-4xl mx-auto">
@@ -198,7 +208,8 @@ const Help = () => {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
