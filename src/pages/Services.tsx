@@ -201,14 +201,26 @@ const Services = () => {
   };
 
   const openDirections = (service: any) => {
+    console.log('🗺️ Opening directions for:', service);
     const address = service.address || service.name;
     const encodedAddress = encodeURIComponent(address);
     
     // Create maps URL that works on all platforms
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    console.log('🗺️ Maps URL:', mapsUrl);
     
     // Open in new tab/window
-    window.open(mapsUrl, '_blank');
+    const result = window.open(mapsUrl, '_blank');
+    console.log('🗺️ Window.open result:', result);
+    
+    if (!result) {
+      console.warn('⚠️ Popup blocked or failed to open');
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open directions in Google Maps.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPriceColor = (price: string) => {
