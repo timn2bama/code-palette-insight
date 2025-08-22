@@ -201,14 +201,37 @@ const Services = () => {
   };
 
   const openDirections = (service: any) => {
+    console.log('🗺️ Opening directions for:', service);
     const address = service.address || service.name;
     const encodedAddress = encodeURIComponent(address);
     
     // Create maps URL that works on all platforms
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    console.log('🗺️ Maps URL:', mapsUrl);
     
-    // Open in new tab/window
-    window.open(mapsUrl, '_blank');
+    // Try to open in new tab/window
+    const result = window.open(mapsUrl, '_blank');
+    
+    // If popup blocked, offer alternative
+    if (!result || result.closed || typeof result.closed === 'undefined') {
+      console.warn('⚠️ Popup blocked, offering alternatives');
+      
+      // Try to copy URL to clipboard as fallback
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(mapsUrl).then(() => {
+          toast({
+            title: "Directions Link Copied",
+            description: "The Google Maps link has been copied to your clipboard. Paste it in a new tab to open directions.",
+          });
+        }).catch(() => {
+          // Final fallback - open in same tab
+          window.location.href = mapsUrl;
+        });
+      } else {
+        // No clipboard support, open in same tab
+        window.location.href = mapsUrl;
+      }
+    }
   };
 
   const getPriceColor = (price: string) => {

@@ -1,11 +1,21 @@
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 import { Sparkles, Users, Target, Heart } from "lucide-react";
+import { generateOrganizationJsonLd } from "@/utils/seo";
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="About SyncStyle - Smart Wardrobe Management Team"
+        description="Learn about SyncStyle's mission to revolutionize wardrobe management with smart technology, weather integration, and intuitive design for effortless style."
+        keywords="about syncstyle, wardrobe management team, fashion technology, smart closet organization, style assistant mission"
+        url="/about"
+        jsonLd={generateOrganizationJsonLd()}
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-4xl mx-auto">
@@ -141,7 +151,8 @@ const About = () => {
           </section>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,9 +1,17 @@
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 
 const TermsOfService = () => {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="Terms of Service - SyncStyle User Agreement & Guidelines"
+        description="Read SyncStyle's Terms of Service to understand user responsibilities, account usage, payment terms, and platform guidelines for wardrobe management."
+        keywords="terms of service, user agreement, wardrobe app terms, syncstyle guidelines, user responsibilities"
+        url="/terms"
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-4xl mx-auto">
@@ -98,7 +106,8 @@ const TermsOfService = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

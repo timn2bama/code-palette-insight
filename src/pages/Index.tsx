@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateOrganizationJsonLd, generateWebsiteJsonLd } from "@/utils/seo";
 import heroImage from "@/assets/hero-wardrobe.jpg";
 
 const Index = () => {
@@ -10,8 +12,16 @@ const Index = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="SyncStyle - Smart Wardrobe & Outfit Management"
+        description="Organize your wardrobe, create perfect outfits, and get weather-based style recommendations with SyncStyle. Your personal styling assistant."
+        keywords="wardrobe management, outfit planning, style assistant, weather-based outfits, fashion organizer, digital closet, smart wardrobe"
+        url="/"
+        jsonLd={[generateOrganizationJsonLd(), generateWebsiteJsonLd()]}
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       {/* Hero Section */}
       <section className="relative pt-24 pb-16">
@@ -83,6 +93,7 @@ const Index = () => {
                 loading="eager"
                 width="600"
                 height="400"
+                fetchPriority="high"
               />
             </div>
           </div>
@@ -229,7 +240,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 

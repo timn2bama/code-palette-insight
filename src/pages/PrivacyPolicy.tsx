@@ -1,9 +1,17 @@
 import Navigation from "@/components/Navigation";
+import SEO from "@/components/SEO";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <Navigation />
+    <>
+      <SEO 
+        title="Privacy Policy - SyncStyle Data Protection & Security"
+        description="Read SyncStyle's Privacy Policy to understand how we collect, use, and protect your wardrobe data and personal information with industry-standard security."
+        keywords="privacy policy, data protection, wardrobe data security, personal information, syncstyle privacy"
+        url="/privacy"
+      />
+      <div className="min-h-screen bg-gradient-subtle">
+        <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-4xl mx-auto">
@@ -83,7 +91,8 @@ const PrivacyPolicy = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
