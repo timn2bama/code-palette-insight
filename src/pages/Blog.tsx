@@ -30,8 +30,9 @@ export default function Blog() {
 
   const fetchPosts = async () => {
     try {
+      // Use the secure published_blog_posts view for public access
       const { data, error } = await supabase
-        .from('blog_posts')
+        .from('published_blog_posts')
         .select(`
           id,
           title,
@@ -39,10 +40,8 @@ export default function Blog() {
           excerpt,
           published_at,
           tags,
-          featured_image_url,
-          author_id
+          featured_image_url
         `)
-        .eq('published', true)
         .order('published_at', { ascending: false });
 
       if (error) throw error;

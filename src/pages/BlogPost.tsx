@@ -30,19 +30,18 @@ export default function BlogPost() {
 
   const fetchPost = async (slug: string) => {
     try {
+      // Use the secure published_blog_posts view for public access
       const { data, error } = await supabase
-        .from('blog_posts')
+        .from('published_blog_posts')
         .select(`
           id,
           title,
           content,
           published_at,
           tags,
-          featured_image_url,
-          author_id
+          featured_image_url
         `)
         .eq('slug', slug)
-        .eq('published', true)
         .single();
 
       if (error) throw error;

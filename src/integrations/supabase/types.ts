@@ -600,7 +600,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      published_blog_posts: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          content: string
+          excerpt: string | null
+          published_at: string | null
+          created_at: string
+          featured_image_url: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
