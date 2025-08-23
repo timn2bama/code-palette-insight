@@ -14,7 +14,7 @@ interface BlogPost {
   published_at: string;
   tags: string[] | null;
   featured_image_url: string | null;
-  author_id: string;
+  author_id?: string;
 }
 
 export default function BlogPost() {
