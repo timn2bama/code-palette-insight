@@ -44,6 +44,8 @@ serve(async (req) => {
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(clothingQuery)}&num=10`;
 
     console.log('Making Google Search request for:', clothingQuery);
+    console.log('Search Engine ID:', searchEngineId);
+    console.log('API Key present:', !!apiKey);
 
     const response = await fetch(searchUrl);
     
