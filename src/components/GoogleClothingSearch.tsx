@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SearchResult {
   title: string;
@@ -25,45 +26,20 @@ export default function GoogleClothingSearch() {
 
     setLoading(true);
     try {
-      // Using Google Custom Search API with clothing-focused search
-      const clothingQuery = `${searchQuery} clothing fashion buy online`;
-      const apiUrl = `https://www.googleapis.com/customsearch/v1?key=YOUR_API_KEY&cx=YOUR_SEARCH_ENGINE_ID&q=${encodeURIComponent(clothingQuery)}&num=8`;
+      const { data, error } = await supabase.functions.invoke('google-clothing-search', {
+        body: { query: searchQuery.trim() }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setResults(data.results || []);
       
-      // For demo purposes, we'll simulate search results
-      // In production, you would need to set up Google Custom Search API
-      setTimeout(() => {
-        const mockResults: SearchResult[] = [
-          {
-            title: `${searchQuery} - Fashion Collection | Online Store`,
-            link: `https://example-store.com/search?q=${encodeURIComponent(searchQuery)}`,
-            snippet: `Shop the latest ${searchQuery} from top fashion brands. Free shipping and returns available.`,
-            displayLink: "example-store.com",
-            formattedUrl: "https://example-store.com"
-          },
-          {
-            title: `Best ${searchQuery} for 2024 | Style Guide`,
-            link: `https://style-guide.com/${searchQuery.toLowerCase()}`,
-            snippet: `Discover trending ${searchQuery} styles and how to wear them. Expert fashion advice and styling tips.`,
-            displayLink: "style-guide.com",
-            formattedUrl: "https://style-guide.com"
-          },
-          {
-            title: `${searchQuery} Sale - Up to 50% Off | Fashion Retailer`,
-            link: `https://fashion-retailer.com/sale/${searchQuery.toLowerCase()}`,
-            snippet: `Save big on ${searchQuery} from your favorite brands. Limited time offers and exclusive deals.`,
-            displayLink: "fashion-retailer.com",
-            formattedUrl: "https://fashion-retailer.com"
-          }
-        ];
-        
-        setResults(mockResults);
-        setLoading(false);
-        
-        toast({
-          title: "Search completed",
-          description: `Found ${mockResults.length} results for "${searchQuery}"`,
-        });
-      }, 1000);
+      toast({
+        title: "Search completed",
+        description: `Found ${data.results?.length || 0} results for "${searchQuery}"`,
+      });
 
     } catch (error) {
       console.error('Search error:', error);
@@ -72,6 +48,8 @@ export default function GoogleClothingSearch() {
         description: "Unable to search at this time. Please try again later.",
         variant: "destructive"
       });
+      setResults([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -169,14 +147,6 @@ export default function GoogleClothingSearch() {
           </div>
         )}
 
-        <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-          <p><strong>Note:</strong> This is a demo version. To enable real Google Search, you'll need to:</p>
-          <ul className="list-disc list-inside mt-1 space-y-1">
-            <li>Set up Google Custom Search API</li>
-            <li>Create a custom search engine focused on clothing/fashion sites</li>
-            <li>Add your API credentials to the application</li>
-          </ul>
-        </div>
       </CardContent>
     </Card>
   );

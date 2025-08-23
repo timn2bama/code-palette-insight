@@ -3,6 +3,9 @@ project_id = "oikpwuraixlnjvyrmnwx"
 [functions.sitemap]
 verify_jwt = false
 
+[functions.google-clothing-search]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321
