@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Home, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { SecurityStatus } from "@/components/SecurityStatus";
@@ -38,18 +38,17 @@ const Navigation = () => {
   return (
     <Card className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-background/80 backdrop-blur-md border-border/50 shadow-elegant">
       <div className="flex items-center gap-6 px-6 py-3">
-        {showBackButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToHome}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            aria-label="Back to home"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Home</span>
-          </Button>
-        )}
+        {/* Always visible Home button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBackToHome}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          aria-label="Home"
+        >
+          <Home className="h-4 w-4" />
+          <span className="hidden sm:inline">Home</span>
+        </Button>
         
         <Link to="/" className="text-lg font-bold text-primary hover:text-accent transition-colors">
           SyncStyle
@@ -113,20 +112,19 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95">
           <nav className="flex flex-col gap-1 p-4">
-            {showBackButton && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  handleBackToHome();
-                  setIsOpen(false);
-                }}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Button>
-            )}
+            {/* Always visible Home button in mobile */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                handleBackToHome();
+                setIsOpen(false);
+              }}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
             
             <Link
               to="/blog"
