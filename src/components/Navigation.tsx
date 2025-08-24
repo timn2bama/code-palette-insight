@@ -59,7 +59,7 @@ const Navigation = () => {
             Blog
           </Link>
           
-          {user && navigationItems.slice(1, -1).map((item) => (
+          {user && navigationItems.slice(1, 6).map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -129,7 +129,7 @@ const Navigation = () => {
               Blog
             </Link>
             
-            {user && navigationItems.slice(1, -1).map((item) => (
+            {user && navigationItems.slice(1, 6).map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
