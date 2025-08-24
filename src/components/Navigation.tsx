@@ -39,9 +39,9 @@ const Navigation = () => {
   return (
     <Card className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-background/80 backdrop-blur-md border-border/50 shadow-elegant">
       <div className="flex items-center gap-6 px-6 py-3">
-        <Link to="/" className="text-lg font-bold text-primary hover:text-accent transition-colors">
+        <div className="text-lg font-bold text-primary">
           SyncStyle
-        </Link>
+        </div>
         
         <SecurityStatus />
         
