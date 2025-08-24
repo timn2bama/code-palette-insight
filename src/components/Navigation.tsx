@@ -27,13 +27,12 @@ const Navigation = () => {
   const showBackButton = featurePages.includes(location.pathname);
 
   const navigationItems = [
-    { name: "Blog", path: "/blog", icon: "📝" },
+    { name: "Home", path: "/", icon: "🏠" },
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
     { name: "Outfits", path: "/outfits", icon: "✨" },
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
     { name: "Subscription", path: "/subscription", icon: "💎" },
-    { name: "Home", path: "/", icon: "🏠" },
   ];
 
   return (
@@ -46,7 +45,7 @@ const Navigation = () => {
         <SecurityStatus />
         
         <nav className="hidden md:flex items-center gap-4">
-          {user && navigationItems.slice(1, 6).map((item) => (
+          {user && navigationItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -61,20 +60,6 @@ const Navigation = () => {
               {item.name}
             </Link>
           ))}
-          
-          {/* Home button - always visible, appears after Subscription */}
-          <Link
-            to="/"
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-              location.pathname === "/"
-                ? "bg-accent text-accent-foreground shadow-card"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            )}
-          >
-            <span>🏠</span>
-            Home
-          </Link>
           
           {user ? (
             <Button variant="outline" size="sm" onClick={handleSignOut}>
@@ -102,7 +87,7 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95">
           <nav className="flex flex-col gap-1 p-4">
-            {user && navigationItems.slice(1, 6).map((item) => (
+            {user && navigationItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -118,21 +103,6 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
-            
-            {/* Home button - always visible in mobile menu */}
-            <Link
-              to="/"
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-                location.pathname === "/"
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              <span>🏠</span>
-              Home
-            </Link>
             
             {user ? (
               <Button 
