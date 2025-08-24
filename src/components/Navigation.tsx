@@ -75,21 +75,19 @@ const Navigation = () => {
             </Link>
           ))}
           
-          {/* Home button - show after Subscription */}
-          {user && (
-            <Link
-              to="/"
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-                location.pathname === "/"
-                  ? "bg-accent text-accent-foreground shadow-card"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              )}
-            >
-              <span>🏠</span>
-              Home
-            </Link>
-          )}
+          {/* Home button - always visible, appears after Subscription */}
+          <Link
+            to="/"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
+              location.pathname === "/"
+                ? "bg-accent text-accent-foreground shadow-card"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            <span>🏠</span>
+            Home
+          </Link>
           
           {user ? (
             <Button variant="outline" size="sm" onClick={handleSignOut}>
