@@ -33,23 +33,12 @@ const Navigation = () => {
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
     { name: "Subscription", path: "/subscription", icon: "💎" },
+    { name: "Home", path: "/", icon: "🏠" },
   ];
 
   return (
     <Card className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-background/80 backdrop-blur-md border-border/50 shadow-elegant">
       <div className="flex items-center gap-6 px-6 py-3">
-        {/* Always visible Home button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBackToHome}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          aria-label="Home"
-        >
-          <Home className="h-4 w-4" />
-          <span className="hidden sm:inline">Home</span>
-        </Button>
-        
         <Link to="/" className="text-lg font-bold text-primary hover:text-accent transition-colors">
           SyncStyle
         </Link>
@@ -86,6 +75,20 @@ const Navigation = () => {
             </Link>
           ))}
           
+          {/* Home button - always visible regardless of login status */}
+          <Link
+            to="/"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
+              location.pathname === "/"
+                ? "bg-accent text-accent-foreground shadow-card"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            <span>🏠</span>
+            Home
+          </Link>
+          
           {user ? (
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
@@ -112,20 +115,6 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95">
           <nav className="flex flex-col gap-1 p-4">
-            {/* Always visible Home button in mobile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                handleBackToHome();
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-2"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
-            
             <Link
               to="/blog"
               className={cn(
@@ -140,7 +129,7 @@ const Navigation = () => {
               Blog
             </Link>
             
-            {user && navigationItems.slice(1).map((item) => (
+            {user && navigationItems.slice(1, -1).map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -156,6 +145,21 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Home button - always visible in mobile menu */}
+            <Link
+              to="/"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
+                location.pathname === "/"
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <span>🏠</span>
+              Home
+            </Link>
             
             {user ? (
               <Button 
