@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Shirt, Plus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import GoogleClothingSearch from "@/components/GoogleClothingSearch";
+
 
 const Wardrobe = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -307,11 +307,6 @@ const Wardrobe = () => {
             ))}
           </div>
         )}
-
-        {/* Google Clothing Search */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <GoogleClothingSearch />
-        </div>
 
         {/* Add Item Button */}
         <div className="text-center mt-8 space-y-4">
