@@ -46,19 +46,6 @@ const Navigation = () => {
         <SecurityStatus />
         
         <nav className="hidden md:flex items-center gap-4">
-          <Link
-            to="/blog"
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-              location.pathname.startsWith("/blog")
-                ? "bg-accent text-accent-foreground shadow-card"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            )}
-          >
-            <span>📝</span>
-            Blog
-          </Link>
-          
           {user && navigationItems.slice(1, 6).map((item) => (
             <Link
               key={item.path}
@@ -115,20 +102,6 @@ const Navigation = () => {
       {isOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95">
           <nav className="flex flex-col gap-1 p-4">
-            <Link
-              to="/blog"
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300",
-                location.pathname.startsWith("/blog")
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              <span>📝</span>
-              Blog
-            </Link>
-            
             {user && navigationItems.slice(1, 6).map((item) => (
               <Link
                 key={item.path}
