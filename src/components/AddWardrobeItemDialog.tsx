@@ -90,7 +90,6 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     });
   };
 
-  // Search functionality
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
@@ -162,8 +161,11 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
     // Check file type first
     if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      console.error('Invalid file type:', file.type);
       toast({
         title: "Invalid file type",
         description: "Only JPEG, PNG, and WebP images are allowed",
@@ -176,7 +178,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     
     // Always compress images from phone cameras (typically > 2MB) or large images
     if (file.size > 2 * 1024 * 1024) {
-      console.log('Original file size:', file.size, 'bytes');
+      console.log('File size exceeds 2MB, compressing...', file.size, 'bytes');
       toast({
         title: "Compressing image...",
         description: "Optimizing image for upload",
@@ -202,7 +204,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     setSelectedFile(processedFile);
     const reader = new FileReader();
     reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
+      const result = e.target?.result as string;
+      console.log('Preview URL created, length:', result?.length);
+      setPreviewUrl(result);
     };
     reader.readAsDataURL(processedFile);
   };
@@ -225,6 +229,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('No authenticated user found');
         toast({
           title: "Authentication required",
           description: "Please log in to add items to your wardrobe.",
@@ -232,6 +237,8 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         });
         return;
       }
+
+      console.log('User authenticated:', user.id);
 
       // Check upload limits for selected category
       if (!canUploadToCategory(formData.category)) {
@@ -280,42 +287,61 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
 
       // Upload photo if file is selected
       if (selectedFile) {
+        console.log('Starting photo upload...', selectedFile.name, selectedFile.size);
+        
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
+        console.log('Uploading to path:', fileName);
+        
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('wardrobe-photos')
           .upload(fileName, selectedFile);
 
         if (uploadError) {
+          console.error('Upload error:', uploadError);
           throw uploadError;
         }
+
+        console.log('Upload successful:', uploadData);
 
         const { data: { publicUrl } } = supabase.storage
           .from('wardrobe-photos')
           .getPublicUrl(fileName);
         
+        console.log('Public URL generated:', publicUrl);
         photoUrl = publicUrl;
       } else if (previewUrl && !selectedFile) {
         // Use the Google Search image URL if no file was uploaded but we have a preview URL
+        console.log('Using search result image URL');
         photoUrl = previewUrl;
       }
 
+      console.log('Final photo URL:', photoUrl);
+
       // Insert wardrobe item with sanitized data
-      const { error: insertError } = await supabase
+      const insertData = {
+        name: nameValidation.sanitized,
+        category: formData.category,
+        color: colorValidation.sanitized || null,
+        brand: brandValidation.sanitized || null,
+        photo_url: photoUrl,
+        user_id: user.id,
+      };
+
+      console.log('Inserting wardrobe item:', insertData);
+
+      const { error: insertError, data: insertedData } = await supabase
         .from('wardrobe_items')
-        .insert({
-          name: nameValidation.sanitized,
-          category: formData.category,
-          color: colorValidation.sanitized || null,
-          brand: brandValidation.sanitized || null,
-          photo_url: photoUrl,
-          user_id: user.id,
-        });
+        .insert(insertData)
+        .select();
 
       if (insertError) {
+        console.error('Insert error:', insertError);
         throw insertError;
       }
+
+      console.log('Item inserted successfully:', insertedData);
 
       // Log the creation for audit purposes
       await logEvent({
@@ -464,12 +490,20 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
                     src={previewUrl} 
                     alt="Preview" 
                     className="w-full h-32 object-cover rounded-md"
+                    onError={(e) => {
+                      console.error('Preview image failed to load:', previewUrl);
+                      console.error('Image error event:', e);
+                    }}
+                    onLoad={() => {
+                      console.log('Preview image loaded successfully');
+                    }}
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      console.log('Removing preview image');
                       setSelectedFile(null);
                       setPreviewUrl(null);
                     }}
@@ -492,7 +526,10 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => document.getElementById('photo')?.click()}
+                    onClick={() => {
+                      console.log('Opening file picker');
+                      document.getElementById('photo')?.click();
+                    }}
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Upload Photo

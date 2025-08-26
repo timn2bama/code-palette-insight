@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,16 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   const photos = item.photo_url ? [item.photo_url] : [];
   const hasPhotos = photos.length > 0;
 
+  useEffect(() => {
+    console.log('ViewDetailsDialog - Item received:', {
+      id: item.id,
+      name: item.name,
+      photo_url: item.photo_url,
+      hasPhotos: hasPhotos,
+      photosArray: photos
+    });
+  }, [item, hasPhotos, photos]);
+
   const nextPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
   };
@@ -57,6 +67,8 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    console.log('ViewDetailsDialog - File upload started:', file.name, file.size);
+
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setPreviewImage(previewUrl);
@@ -66,22 +78,37 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${item.id}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('ViewDetailsDialog - Uploading to:', fileName);
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('wardrobe-photos')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('ViewDetailsDialog - Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('ViewDetailsDialog - Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from('wardrobe-photos')
         .getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
+      console.log('ViewDetailsDialog - Public URL:', publicUrl);
+
+      const { error: updateError, data: updateData } = await supabase
         .from('wardrobe_items')
         .update({ photo_url: publicUrl })
-        .eq('id', item.id);
+        .eq('id', item.id)
+        .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('ViewDetailsDialog - Update error:', updateError);
+        throw updateError;
+      }
+
+      console.log('ViewDetailsDialog - Update successful:', updateData);
 
       toast.success('Photo uploaded successfully!');
       setPreviewImage(null); // Clear preview
@@ -144,6 +171,13 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
                       src={photos[currentPhotoIndex]}
                       alt={`${item.name} - Photo ${currentPhotoIndex + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('ViewDetailsDialog - Image failed to load:', photos[currentPhotoIndex]);
+                        console.error('Image error event:', e);
+                      }}
+                      onLoad={() => {
+                        console.log('ViewDetailsDialog - Image loaded successfully:', photos[currentPhotoIndex]);
+                      }}
                     />
                     
                     {/* Navigation Arrows */}
