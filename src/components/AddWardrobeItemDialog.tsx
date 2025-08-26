@@ -134,10 +134,11 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         brand: result.suggestedBrand || "",
       });
 
-      // For now, just set the preview URL without trying to download
-      // The user can manually upload a photo if needed
+      // Store the image URL from search result
       if (result.image) {
         setPreviewUrl(result.image);
+        // Set the selected file to null since we're using a URL
+        setSelectedFile(null);
       }
 
       setShowSearchResults(false);
@@ -277,7 +278,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
 
       let photoUrl = null;
 
-      // Upload photo if selected
+      // Upload photo if file is selected
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -295,6 +296,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
           .getPublicUrl(fileName);
         
         photoUrl = publicUrl;
+      } else if (previewUrl && !selectedFile) {
+        // Use the Google Search image URL if no file was uploaded but we have a preview URL
+        photoUrl = previewUrl;
       }
 
       // Insert wardrobe item with sanitized data
