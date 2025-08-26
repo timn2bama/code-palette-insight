@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Search, Calendar, Trash2, Edit, Eye, Shirt } from "lucide-react";
+import ViewOutfitDialog from "@/components/ViewOutfitDialog";
 
 interface OutfitWithItems {
   id: string;
@@ -371,10 +372,12 @@ const Outfits = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" disabled>
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
-                    </Button>
+                    <ViewOutfitDialog outfit={outfit}>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                    </ViewOutfitDialog>
                     <Button variant="outline" size="sm" className="flex-1" disabled>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
