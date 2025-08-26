@@ -587,9 +587,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
             <Button
               type="submit"
               disabled={loading || !formData.name || !formData.category}
-              className="flex-1"
+              className="flex-1 bg-gradient-primary hover:opacity-90"
             >
-              {loading ? "Adding..." : "Add Item"}
+              {loading ? "Adding to Wardrobe..." : "💾 Add to Wardrobe"}
             </Button>
           </div>
         </form>
