@@ -30,9 +30,9 @@ export default function BlogPost() {
 
   const fetchPost = async (slug: string) => {
     try {
-      // Use the secure published_blog_posts view for public access
+      // Use the secure public_blog_posts view for public access
       const { data, error } = await supabase
-        .from('published_blog_posts')
+        .from('public_blog_posts')
         .select(`
           id,
           title,
