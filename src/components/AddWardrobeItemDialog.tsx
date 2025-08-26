@@ -134,13 +134,9 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         brand: result.suggestedBrand || "",
       });
 
-      // If there's an image, try to download it
+      // For now, just set the preview URL without trying to download
+      // The user can manually upload a photo if needed
       if (result.image) {
-        const imageResponse = await fetch(result.image);
-        const blob = await imageResponse.blob();
-        const file = new File([blob], `${result.title || 'clothing'}.jpg`, { type: 'image/jpeg' });
-        
-        setSelectedFile(file);
         setPreviewUrl(result.image);
       }
 
@@ -148,7 +144,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       
       toast({
         title: "Item selected",
-        description: "Form filled with search result. You can edit the details before adding.",
+        description: "Form filled with search result. Upload a photo manually if needed.",
       });
 
     } catch (error) {
