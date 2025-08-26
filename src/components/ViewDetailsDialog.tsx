@@ -32,6 +32,7 @@ interface ViewDetailsDialogProps {
 const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -56,7 +57,11 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewImage(previewUrl);
     setUploading(true);
+    
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${item.id}/${Date.now()}.${fileExt}`;
@@ -79,12 +84,18 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
       if (updateError) throw updateError;
 
       toast.success('Photo uploaded successfully!');
+      setPreviewImage(null); // Clear preview
       onItemUpdated?.();
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error('Failed to upload photo');
+      setPreviewImage(null); // Clear preview on error
     } finally {
       setUploading(false);
+      // Clean up the preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     }
   };
 
@@ -175,6 +186,28 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
                 )}
               </div>
             </div>
+
+            {/* Preview Image */}
+            {previewImage && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Uploading Preview:</p>
+                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-secondary/20 border-2 border-dashed border-primary/50">
+                  <img
+                    src={previewImage}
+                    alt="Upload preview"
+                    className="w-full h-full object-cover"
+                  />
+                  {uploading && (
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="text-sm font-medium">Uploading...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Photo Thumbnails */}
             {photos.length > 1 && (
