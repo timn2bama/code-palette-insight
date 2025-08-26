@@ -36,10 +36,9 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   
-  // Use the uploaded photo if available, otherwise show a generic clothing placeholder
-  const photos = item.photo_url ? [item.photo_url] : [
-    `https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&h=600&fit=crop&auto=format`
-  ];
+  // Use the uploaded photo if available
+  const photos = item.photo_url ? [item.photo_url] : [];
+  const hasPhotos = photos.length > 0;
 
   const nextPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
@@ -128,38 +127,50 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
             {/* Main Photo Display */}
             <div className="relative group">
               <div className="aspect-[3/4] rounded-lg overflow-hidden bg-secondary/20">
-                <img
-                  src={photos[currentPhotoIndex]}
-                  alt={`${item.name} - Photo ${currentPhotoIndex + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Navigation Arrows */}
-                {photos.length > 1 && (
+                {hasPhotos ? (
                   <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
-                      onClick={prevPhoto}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
-                      onClick={nextPhoto}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
+                    <img
+                      src={photos[currentPhotoIndex]}
+                      alt={`${item.name} - Photo ${currentPhotoIndex + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Navigation Arrows */}
+                    {photos.length > 1 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                          onClick={prevPhoto}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                          onClick={nextPhoto}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
 
-                {/* Photo Counter */}
-                {photos.length > 1 && (
-                  <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1 text-sm">
-                    {currentPhotoIndex + 1} / {photos.length}
+                    {/* Photo Counter */}
+                    {photos.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1 text-sm">
+                        {currentPhotoIndex + 1} / {photos.length}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                    <ImagePlus className="h-16 w-16 mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No Photos</p>
+                    <p className="text-sm text-center px-4">
+                      Upload a photo to see your item here
+                    </p>
                   </div>
                 )}
               </div>
