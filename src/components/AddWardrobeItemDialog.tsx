@@ -355,11 +355,12 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
           Add New Item to Wardrobe
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add New Wardrobe Item</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4">
           {/* Google Search Section */}
           <div className="space-y-3 border-b border-border pb-4">
             <Label className="text-base font-semibold">🔍 Quick Search & Add</Label>
@@ -593,6 +594,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
             </Button>
           </div>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
