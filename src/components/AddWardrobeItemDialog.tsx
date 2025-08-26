@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, Image, AlertCircle, Crown } from "lucide-react";
+import { Upload, Image, AlertCircle, Crown, Search, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { validateTextInput, validateImageFile, getSafeErrorMessage, rateLimiter } from "@/lib/security";
@@ -31,6 +31,12 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     color: "",
     brand: "",
   });
+
+  // Search functionality state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const categories = [
     "tops", "bottoms", "dresses", "outerwear", "shoes", "accessories"
@@ -82,6 +88,77 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       
       img.src = URL.createObjectURL(file);
     });
+  };
+
+  // Search functionality
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-clothing-items', {
+        body: { query: searchQuery }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setSearchResults(data.results || []);
+      setShowSearchResults(true);
+      
+      toast({
+        title: "Search completed",
+        description: `Found ${data.results?.length || 0} clothing items`,
+      });
+
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search failed",
+        description: "Unable to search for clothing items. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSearchResult = async (result: any) => {
+    try {
+      // Auto-fill form with search result data
+      setFormData({
+        name: result.title || "",
+        category: result.suggestedCategory || "",
+        color: result.suggestedColor || "",
+        brand: result.suggestedBrand || "",
+      });
+
+      // If there's an image, try to download it
+      if (result.image) {
+        const imageResponse = await fetch(result.image);
+        const blob = await imageResponse.blob();
+        const file = new File([blob], `${result.title || 'clothing'}.jpg`, { type: 'image/jpeg' });
+        
+        setSelectedFile(file);
+        setPreviewUrl(result.image);
+      }
+
+      setShowSearchResults(false);
+      
+      toast({
+        title: "Item selected",
+        description: "Form filled with search result. You can edit the details before adding.",
+      });
+
+    } catch (error) {
+      console.error('Error selecting search result:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load selected item. Please try manually entering the details.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,6 +364,95 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
           <DialogTitle>Add New Wardrobe Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Google Search Section */}
+          <div className="space-y-3 border-b border-border pb-4">
+            <Label className="text-base font-semibold">🔍 Quick Search & Add</Label>
+            <p className="text-sm text-muted-foreground">Search Google for clothing items to auto-fill the form</p>
+            <div className="flex gap-2">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for clothing items..."
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+                variant="outline"
+                size="default"
+              >
+                {isSearching ? "Searching..." : <Search className="w-4 h-4" />}
+              </Button>
+            </div>
+            
+            {/* Search Results */}
+            {showSearchResults && (
+              <div className="space-y-2 max-h-60 overflow-y-auto border border-border rounded-md p-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Search Results</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSearchResults(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+                {searchResults.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No results found. Try a different search term.</p>
+                ) : (
+                  <div className="grid gap-2">
+                    {searchResults.slice(0, 6).map((result, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 rounded-md border border-border hover:bg-secondary/50 cursor-pointer transition-colors"
+                        onClick={() => handleSelectSearchResult(result)}
+                      >
+                        {result.image && (
+                          <img
+                            src={result.image}
+                            alt={result.title}
+                            className="w-12 h-12 object-cover rounded-md"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{result.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{result.snippet}</p>
+                          {(result.suggestedCategory || result.suggestedColor || result.suggestedBrand) && (
+                            <div className="flex gap-1 mt-1">
+                              {result.suggestedCategory && (
+                                <span className="text-xs bg-primary/10 text-primary px-1 rounded">
+                                  {result.suggestedCategory}
+                                </span>
+                              )}
+                              {result.suggestedColor && (
+                                <span className="text-xs bg-secondary text-secondary-foreground px-1 rounded">
+                                  {result.suggestedColor}
+                                </span>
+                              )}
+                              {result.suggestedBrand && (
+                                <span className="text-xs bg-accent text-accent-foreground px-1 rounded">
+                                  {result.suggestedBrand}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <Plus className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Photo Upload */}
           <div className="space-y-2">
             <Label htmlFor="photo">Photo</Label>
