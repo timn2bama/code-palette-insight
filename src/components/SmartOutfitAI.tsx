@@ -98,6 +98,15 @@ const SmartOutfitAI = ({ onOutfitCreated }: SmartOutfitAIProps) => {
 
       if (data.error) {
         console.error('Function returned error:', data.error);
+        
+        // Check if this is a quota limit error
+        if (data.error.includes('quota limits') || data.error.includes('temporarily unavailable')) {
+          toast.error("AI styling is temporarily unavailable. Please try again later.");
+          setWeather(data.weather);
+          setSuggestions([]);
+          return;
+        }
+        
         throw new Error(data.error);
       }
 

@@ -183,6 +183,33 @@ Only suggest outfits using items that actually exist in their wardrobe. Use the 
     if (!openAIResponse.ok) {
       const errorText = await openAIResponse.text();
       console.error('OpenAI API error:', errorText);
+      
+      // Handle quota exceeded specifically
+      if (openAIResponse.status === 429) {
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.error?.code === 'insufficient_quota') {
+            return new Response(JSON.stringify({
+              error: "AI styling is temporarily unavailable due to quota limits. Please try again later.",
+              suggestions: [],
+              weather: {
+                temperature: weatherData.main.temp,
+                condition: weatherData.weather[0].description,
+                feelsLike: weatherData.main.feels_like,
+                humidity: weatherData.main.humidity,
+                location: weatherData.name
+              },
+              message: "Weather data retrieved successfully, but AI suggestions are temporarily unavailable."
+            }), {
+              status: 200, // Return 200 so frontend can handle gracefully
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        } catch (parseError) {
+          // Fall through to generic error
+        }
+      }
+      
       throw new Error(`OpenAI API error: ${openAIResponse.status}`);
     }
 
