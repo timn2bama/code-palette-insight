@@ -144,6 +144,13 @@ Only suggest outfits using items that actually exist in their wardrobe. Be creat
     console.log('Sending request to OpenAI...');
     
     // Call OpenAI API
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found in environment');
+      throw new Error('OpenAI API key not configured');
+    }
+    
+    console.log('OpenAI API key available:', openAIApiKey ? 'Yes' : 'No');
+    
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -167,23 +174,29 @@ Only suggest outfits using items that actually exist in their wardrobe. Be creat
       }),
     });
 
+    console.log('OpenAI response status:', openAIResponse.status);
+
     if (!openAIResponse.ok) {
       const errorText = await openAIResponse.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+      console.error('OpenAI API error response:', errorText);
+      throw new Error(`OpenAI API error: ${openAIResponse.status} - ${errorText}`);
     }
 
     const openAIData = await openAIResponse.json();
-    console.log('OpenAI response received');
+    console.log('OpenAI response received, content length:', openAIData.choices?.[0]?.message?.content?.length || 0);
     
     let aiSuggestions;
     try {
       const content = openAIData.choices[0].message.content;
+      console.log('Raw OpenAI content:', content.substring(0, 200) + '...');
       const parsed = JSON.parse(content);
+      console.log('Parsed JSON structure:', Object.keys(parsed));
       // Handle both array format and object with array property
       aiSuggestions = Array.isArray(parsed) ? parsed : (parsed.outfits || parsed.suggestions || []);
+      console.log('Final suggestions count:', aiSuggestions.length);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
+      console.error('Raw content that failed to parse:', openAIData.choices[0].message.content);
       throw new Error('Failed to parse AI suggestions');
     }
 
