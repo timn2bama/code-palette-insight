@@ -101,6 +101,13 @@ const SmartOutfitAI = ({ onOutfitCreated }: SmartOutfitAIProps) => {
         throw new Error(data.error);
       }
 
+      if (data.success && data.message?.includes('test')) {
+        // This is a test response, show appropriate message
+        toast.info("Smart AI is initializing. Please try again in a moment.");
+        setSuggestions([]);
+        return;
+      }
+
       if (data.suggestions && data.suggestions.length > 0) {
         console.log('Success! Got suggestions:', data.suggestions.length);
         setSuggestions(data.suggestions);
