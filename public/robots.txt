@@ -3,12 +3,15 @@ Allow: /
 
 # Block private/protected routes
 Disallow: /wardrobe
-Disallow: /outfits
+Disallow: /outfits  
 Disallow: /weather
 Disallow: /services
 Disallow: /subscription
 Disallow: /auth
 Disallow: /blog/admin
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
 
 # Allow public content
 Allow: /blog
@@ -17,9 +20,71 @@ Allow: /contact
 Allow: /help
 Allow: /privacy
 Allow: /terms
+Allow: /og-image.jpg
+Allow: /logo.png
+Allow: /favicon.ico
+
+# AI Crawlers - Enhanced access
+User-agent: GPTBot
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+Allow: /privacy
+Allow: /terms
+Disallow: /wardrobe
+Disallow: /outfits
+Disallow: /weather
+Disallow: /services
+Disallow: /auth
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+
+User-agent: Claude-Web
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+
+User-agent: Bard
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+
+# Search engine optimizations
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
 
 # Sitemap location
 Sitemap: https://syncstyle.lovable.app/functions/v1/sitemap
 
-# Crawl delay
+# Host directive
+Host: https://syncstyle.lovable.app
+
+# General crawl delay
 Crawl-delay: 1

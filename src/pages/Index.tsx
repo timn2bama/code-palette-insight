@@ -4,7 +4,15 @@ import Navigation from "@/components/Navigation";
 import SEO from "@/components/SEO";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { generateOrganizationJsonLd, generateWebsiteJsonLd } from "@/utils/seo";
+import { 
+  generateOrganizationJsonLd, 
+  generateWebsiteJsonLd, 
+  generateFAQJsonLd,
+  generateSoftwareApplicationJsonLd,
+  generateServiceJsonLd,
+  generateHowToJsonLd
+} from "@/utils/seo";
+import { generateVoiceSearchContent } from "@/utils/ai-seo";
 import heroImage from "@/assets/hero-wardrobe.jpg";
 
 const Index = () => {
@@ -14,11 +22,19 @@ const Index = () => {
   return (
     <>
       <SEO 
-        title="SyncStyle - Smart Wardrobe & Outfit Management"
-        description="Organize your wardrobe, create perfect outfits, and get weather-based style recommendations with SyncStyle. Your personal styling assistant."
-        keywords="wardrobe management, outfit planning, style assistant, weather-based outfits, fashion organizer, digital closet, smart wardrobe"
+        title="SyncStyle - Smart Wardrobe & Outfit Management | AI-Powered Style Assistant"
+        description="Transform your wardrobe with SyncStyle's AI-powered fashion assistant. Organize clothes digitally, create perfect outfits, get weather-based style recommendations, and discover local fashion services. Free smart wardrobe management for modern style."
+        keywords="AI fashion assistant, smart wardrobe management, digital closet organizer, weather outfit suggestions, style planning app, clothing organization, fashion AI, wardrobe analytics, outfit creator, personal stylist app"
         url="/"
-        jsonLd={[generateOrganizationJsonLd(), generateWebsiteJsonLd()]}
+        aiOptimized={true}
+        jsonLd={[
+          generateOrganizationJsonLd(), 
+          generateWebsiteJsonLd(),
+          generateSoftwareApplicationJsonLd(),
+          generateServiceJsonLd(),
+          generateFAQJsonLd(),
+          generateHowToJsonLd()
+        ]}
       />
       <div className="min-h-screen bg-gradient-subtle">
         <Navigation />
@@ -28,11 +44,18 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold text-primary mb-6 leading-tight">
+               <h1 className="text-5xl md:text-6xl font-bold text-primary mb-6 leading-tight">
                 Your Smart
                 <span className="text-transparent bg-clip-text bg-gradient-accent"> Wardrobe</span>
                 <br />Assistant
-              </h1>
+               </h1>
+               
+               {/* Hidden content for AI voice search optimization */}
+               <div className="sr-only" aria-hidden="true">
+                 {generateVoiceSearchContent().map((query, index) => (
+                   <span key={index}>{query} </span>
+                 ))}
+               </div>
                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                 Track your style, create perfect outfits, and never miss a sale on your favorite pieces. 
                 <span className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-accent"> SyncStyle</span> makes wardrobe management effortless and elegant.
@@ -100,9 +123,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 pb-16" aria-labelledby="features-heading">
-        <h2 id="features-heading" className="sr-only">SyncStyle Features</h2>
+       {/* Features Section */}
+       <section className="container mx-auto px-4 pb-16" aria-labelledby="features-heading">
+         <h2 id="features-heading" className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">
+           Transform Your Style with AI-Powered Features
+         </h2>
+         
+         {/* Featured content for AI understanding */}
+         <div className="text-center mb-12">
+           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+             Discover how artificial intelligence revolutionizes wardrobe management. From smart outfit recommendations 
+             to weather-based styling, SyncStyle uses advanced AI to understand your preferences and create perfect looks 
+             for every occasion. Experience the future of personal styling with our intelligent fashion assistant.
+           </p>
+         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
           <article className="group">
@@ -113,11 +147,14 @@ const Index = () => {
               tabIndex={0}
               aria-label="Access Smart Wardrobe feature"
             >
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-4" role="img" aria-label="Wardrobe icon">👔</div>
-                <h3 className="font-semibold text-primary mb-2">Smart Wardrobe</h3>
-                <p className="text-sm text-muted-foreground">Track your clothing collection with analytics and smart insights. Upload photos, categorize items, and monitor wear patterns.</p>
-              </CardContent>
+               <CardContent className="p-6 text-center">
+                 <div className="text-4xl mb-4" role="img" aria-label="Wardrobe icon">👔</div>
+                 <h3 className="font-semibold text-primary mb-2">Smart Wardrobe</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Digital closet organization with AI-powered analytics. Upload photos, categorize by color and style, 
+                   track wear frequency, and get insights into your fashion habits. Perfect for minimalist wardrobes and extensive collections.
+                 </p>
+               </CardContent>
             </Card>
           </article>
           
@@ -129,11 +166,14 @@ const Index = () => {
               tabIndex={0}
               aria-label="Access Outfit Creator feature"
             >
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-4" role="img" aria-label="Sparkles icon">✨</div>
-                <h3 className="font-semibold text-primary mb-2">Outfit Creator</h3>
-                <p className="text-sm text-muted-foreground">Mix and match with our intuitive style builder. Create and save outfit combinations for any occasion.</p>
-              </CardContent>
+               <CardContent className="p-6 text-center">
+                 <div className="text-4xl mb-4" role="img" aria-label="Sparkles icon">✨</div>
+                 <h3 className="font-semibold text-primary mb-2">AI Outfit Creator</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Intelligent outfit planning with machine learning algorithms. Mix and match clothing items, 
+                   get AI styling suggestions, and create looks for work, casual, formal, and special occasions.
+                 </p>
+               </CardContent>
             </Card>
           </article>
           
@@ -145,11 +185,14 @@ const Index = () => {
               tabIndex={0}
               aria-label="Access Weather Sync feature"
             >
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-4" role="img" aria-label="Weather icon">🌤️</div>
-                <h3 className="font-semibold text-primary mb-2">Weather Sync</h3>
-                <p className="text-sm text-muted-foreground">Get AI-powered outfit suggestions based on local weather conditions and temperature forecasts.</p>
-              </CardContent>
+               <CardContent className="p-6 text-center">
+                 <div className="text-4xl mb-4" role="img" aria-label="Weather icon">🌤️</div>
+                 <h3 className="font-semibold text-primary mb-2">Weather-Smart Styling</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Real-time weather integration for climate-appropriate outfit recommendations. AI analyzes temperature, 
+                   humidity, precipitation, and UV index to suggest perfect clothing combinations for any weather condition.
+                 </p>
+               </CardContent>
             </Card>
           </article>
           
@@ -161,11 +204,14 @@ const Index = () => {
               tabIndex={0}
               aria-label="Access Local Services feature"
             >
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-4" role="img" aria-label="Shopping icon">🛍️</div>
-                <h3 className="font-semibold text-primary mb-2">Local Services</h3>
-                <p className="text-sm text-muted-foreground">Find nearby dry cleaners, tailors, and styling services. Connect with local fashion professionals.</p>
-              </CardContent>
+               <CardContent className="p-6 text-center">
+                 <div className="text-4xl mb-4" role="img" aria-label="Shopping icon">🛍️</div>
+                 <h3 className="font-semibold text-primary mb-2">Fashion Services Network</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Discover local fashion professionals including personal stylists, tailors, dry cleaners, and boutiques. 
+                   Connect with experts for alterations, styling consultations, and wardrobe refresh services.
+                 </p>
+               </CardContent>
             </Card>
           </article>
         </div>

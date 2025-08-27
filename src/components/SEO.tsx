@@ -12,7 +12,8 @@ interface SEOProps {
   modifiedTime?: string;
   author?: string;
   tags?: string[];
-  jsonLd?: object;
+  jsonLd?: object | object[];
+  aiOptimized?: boolean;
 }
 
 const SEO = ({
@@ -28,6 +29,7 @@ const SEO = ({
   author,
   tags,
   jsonLd,
+  aiOptimized = false,
 }: SEOProps) => {
   const fullTitle = title.includes('SyncStyle') ? title : `${title} | SyncStyle`;
   const fullUrl = url.startsWith('http') ? url : `https://syncstyle.lovable.app${url}`;
@@ -78,10 +80,30 @@ const SEO = ({
       <link rel="dns-prefetch" href="//api.openweathermap.org" />
       <link rel="dns-prefetch" href="//api.weatherapi.com" />
       
+      {/* AI-Optimized Meta Tags */}
+      {aiOptimized && (
+        <>
+          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+          <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+          <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+          <meta name="theme-color" content="#fab446" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta property="og:locale" content="en_US" />
+          <meta property="og:site_name" content="SyncStyle" />
+          <meta name="twitter:site" content="@syncstyle" />
+          <meta name="twitter:creator" content="@syncstyle" />
+          <meta name="application-name" content="SyncStyle" />
+          <meta name="msapplication-TileColor" content="#fab446" />
+          <meta name="format-detection" content="telephone=no" />
+        </>
+      )}
+      
       {/* JSON-LD Structured Data */}
       {jsonLd && (
         <script type="application/ld+json">
-          {JSON.stringify(jsonLd)}
+          {JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd])}
         </script>
       )}
     </Helmet>
