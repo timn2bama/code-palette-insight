@@ -23,28 +23,26 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Test 1: Environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    // Environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const weatherApiKey = Deno.env.get('OPENWEATHER_API_KEY');
     
-    console.log('Environment check:', {
-      supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
-      supabaseServiceKey: supabaseServiceKey ? 'Present' : 'Missing',
-      openAIApiKey: openAIApiKey ? 'Present' : 'Missing',
-      weatherApiKey: weatherApiKey ? 'Present' : 'Missing'
-    });
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase environment variables');
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
+      throw new Error('OpenAI API key not configured');
+    }
+    
+    if (!weatherApiKey) {
+      console.error('Weather API key not found');
+      throw new Error('Weather API key not configured');
     }
 
-    // Test 2: Supabase client creation
+    // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('Supabase client created successfully');
     
-    // Test 3: User authentication
+    // Get user from JWT
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -53,32 +51,201 @@ serve(async (req) => {
       throw new Error('Invalid user authentication');
     }
 
-    console.log('User authenticated successfully:', user.id);
+    console.log('User authenticated:', user.id);
 
-    // Test 4: Request body parsing
-    const requestBody = await req.json();
-    console.log('Request body parsed:', requestBody);
+    const { location, preferences } = await req.json();
+    console.log('Request data:', { location, preferences });
 
-    const { location, preferences } = requestBody;
-    if (!location) {
+    if (!location?.trim()) {
       throw new Error('Location is required');
     }
 
-    // Test 5: Basic response
-    const testResponse = {
-      success: true,
-      message: 'All tests passed successfully!',
-      data: {
-        userId: user.id,
-        location: location,
-        preferences: preferences || 'None',
-        environmentCheck: 'All environment variables present'
-      }
+    // Get weather data
+    console.log('Fetching weather for location:', location);
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${weatherApiKey}&units=imperial`;
+    
+    const weatherResponse = await fetch(weatherUrl);
+    console.log('Weather API response status:', weatherResponse.status);
+    
+    if (!weatherResponse.ok) {
+      const errorText = await weatherResponse.text();
+      console.error('Weather API error:', errorText);
+      throw new Error(`Weather API error: ${weatherResponse.status}`);
+    }
+    
+    const weatherData = await weatherResponse.json();
+    console.log('Weather data fetched successfully:', {
+      temp: weatherData.main.temp,
+      condition: weatherData.weather[0].description
+    });
+
+    // Get user's wardrobe items
+    console.log('Fetching wardrobe items for user:', user.id);
+    const { data: wardrobeItems, error: wardrobeError } = await supabase
+      .from('wardrobe_items')
+      .select('id, name, category, color, brand, photo_url')
+      .eq('user_id', user.id);
+
+    if (wardrobeError) {
+      console.error('Wardrobe error:', wardrobeError);
+      throw new Error('Failed to fetch wardrobe items');
+    }
+
+    console.log('Wardrobe items fetched:', wardrobeItems?.length || 0, 'items');
+
+    if (!wardrobeItems || wardrobeItems.length === 0) {
+      return new Response(JSON.stringify({
+        suggestions: [],
+        message: "No wardrobe items found. Please add some clothes to your wardrobe first!",
+        weather: {
+          temperature: weatherData.main.temp,
+          condition: weatherData.weather[0].description,
+          location: weatherData.name
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Prepare wardrobe summary for AI
+    const wardrobeSummary = wardrobeItems.map(item => 
+      `${item.name} (${item.category}${item.color ? `, ${item.color}` : ''}${item.brand ? `, ${item.brand}` : ''})`
+    ).join('\n');
+
+    // Create AI prompt
+    const aiPrompt = `You are a professional stylist AI. Based on the current weather and the user's wardrobe, suggest 3 complete outfit combinations.
+
+WEATHER CONDITIONS:
+- Temperature: ${weatherData.main.temp}°F
+- Condition: ${weatherData.weather[0].description}
+- Humidity: ${weatherData.main.humidity}%
+
+USER'S WARDROBE:
+${wardrobeSummary}
+
+USER PREFERENCES: ${preferences || 'No specific preferences mentioned'}
+
+Please suggest 3 complete outfits that:
+1. Are appropriate for the weather conditions
+2. Use only items from the user's wardrobe
+3. Consider style, comfort, and practicality
+
+For each outfit, provide:
+- A catchy outfit name
+- List of specific items from their wardrobe (use exact names)
+- Brief explanation of why this outfit works for today's weather
+- Style notes or tips
+
+Respond with a JSON object with this structure:
+{
+  "suggestions": [
+    {
+      "name": "Outfit Name",
+      "items": ["exact item name 1", "exact item name 2"],
+      "reason": "Why this outfit works for the weather",
+      "styleNotes": "Additional styling tips",
+      "occasion": "work/casual/formal",
+      "weatherScore": 95
+    }
+  ]
+}
+
+Only suggest outfits using items that actually exist in their wardrobe. Use the exact item names.`;
+
+    console.log('Sending request to OpenAI...');
+    
+    // Call OpenAI API
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-2025-04-14',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional fashion stylist. Always respond with valid JSON.'
+          },
+          {
+            role: 'user',
+            content: aiPrompt
+          }
+        ],
+        max_completion_tokens: 1500,
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    console.log('OpenAI response status:', openAIResponse.status);
+
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+    }
+
+    const openAIData = await openAIResponse.json();
+    console.log('OpenAI response received successfully');
+    
+    let aiSuggestions = [];
+    try {
+      const content = openAIData.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      aiSuggestions = parsed.suggestions || [];
+      console.log('AI suggestions parsed successfully:', aiSuggestions.length);
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      // Fallback suggestions
+      aiSuggestions = [{
+        name: "Weather-Appropriate Casual",
+        items: wardrobeItems.slice(0, 3).map(item => item.name),
+        reason: "Perfect for today's weather conditions",
+        styleNotes: "Simple and comfortable",
+        occasion: "casual",
+        weatherScore: 85
+      }];
+    }
+
+    // Match AI suggestions with actual wardrobe items
+    const enhancedSuggestions = aiSuggestions.map((suggestion: any, index: number) => {
+      const matchedItems = suggestion.items?.map((itemName: string) => {
+        const match = wardrobeItems.find(item => 
+          item.name.toLowerCase().includes(itemName.toLowerCase()) ||
+          itemName.toLowerCase().includes(item.name.toLowerCase())
+        );
+        return match;
+      }).filter(Boolean) || [];
+
+      return {
+        id: `ai-suggestion-${index + 1}`,
+        name: suggestion.name || `AI Outfit ${index + 1}`,
+        items: matchedItems,
+        suggestedItems: suggestion.items || [],
+        reason: suggestion.reason || 'Perfect for today\'s weather',
+        styleNotes: suggestion.styleNotes || '',
+        occasion: suggestion.occasion || 'casual',
+        weatherScore: suggestion.weatherScore || 90,
+        aiGenerated: true
+      };
+    });
+
+    const result = {
+      suggestions: enhancedSuggestions,
+      weather: {
+        temperature: weatherData.main.temp,
+        condition: weatherData.weather[0].description,
+        feelsLike: weatherData.main.feels_like,
+        humidity: weatherData.main.humidity,
+        location: weatherData.name
+      },
+      wardrobeItemsCount: wardrobeItems.length
     };
 
-    console.log('Returning test response:', testResponse);
+    console.log('Returning suggestions successfully:', enhancedSuggestions.length);
 
-    return new Response(JSON.stringify(testResponse), {
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
@@ -88,8 +255,8 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       error: error.message,
-      message: 'Test function failed',
-      success: false
+      suggestions: [],
+      message: 'Failed to generate outfit suggestions. Please try again.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
