@@ -46,16 +46,24 @@ serve(async (req) => {
     // Get weather data
     const weatherApiKey = Deno.env.get('OPENWEATHER_API_KEY');
     if (!weatherApiKey) {
+      console.error('OpenWeather API key not found in environment');
       throw new Error('Weather API key not configured');
     }
 
     console.log('Fetching weather for location:', location);
-    const weatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${weatherApiKey}&units=imperial`
-    );
+    console.log('Weather API key available:', weatherApiKey ? 'Yes' : 'No');
+    
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${weatherApiKey}&units=imperial`;
+    console.log('Weather API URL (without key):', weatherUrl.replace(weatherApiKey, 'HIDDEN'));
+    
+    const weatherResponse = await fetch(weatherUrl);
+    
+    console.log('Weather API response status:', weatherResponse.status);
     
     if (!weatherResponse.ok) {
-      throw new Error('Failed to fetch weather data');
+      const errorText = await weatherResponse.text();
+      console.error('Weather API error response:', errorText);
+      throw new Error(`Failed to fetch weather data: ${weatherResponse.status} - ${errorText}`);
     }
     
     const weatherData = await weatherResponse.json();
