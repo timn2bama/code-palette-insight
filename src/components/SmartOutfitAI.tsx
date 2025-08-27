@@ -77,8 +77,11 @@ const SmartOutfitAI = ({ onOutfitCreated }: SmartOutfitAIProps) => {
       return;
     }
 
+    console.log('Starting Smart AI request...', { location, preferences, userId: user?.id });
     setLoading(true);
+    
     try {
+      console.log('Calling supabase function...');
       const { data, error } = await supabase.functions.invoke('smart-outfit-ai', {
         body: {
           location: location.trim(),
@@ -86,19 +89,36 @@ const SmartOutfitAI = ({ onOutfitCreated }: SmartOutfitAIProps) => {
         }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (data.error) {
+        console.error('Function returned error:', data.error);
+        throw new Error(data.error);
+      }
 
       if (data.suggestions && data.suggestions.length > 0) {
+        console.log('Success! Got suggestions:', data.suggestions.length);
         setSuggestions(data.suggestions);
         setWeather(data.weather);
         toast.success(`Generated ${data.suggestions.length} AI outfit suggestions!`);
       } else {
+        console.log('No suggestions generated:', data);
         toast.error(data.message || "No suggestions could be generated");
         setSuggestions([]);
       }
     } catch (error) {
-      console.error('Error generating suggestions:', error);
-      toast.error("Failed to generate outfit suggestions. Please try again.");
+      console.error('Error in handleGenerateSuggestions:', error);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      toast.error(`Failed to generate outfit suggestions: ${error.message}`);
       setSuggestions([]);
     } finally {
       setLoading(false);
