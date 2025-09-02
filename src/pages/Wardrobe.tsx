@@ -8,6 +8,7 @@ import AddWardrobeItemDialog from "@/components/AddWardrobeItemDialog";
 import ViewDetailsDialog from "@/components/ViewDetailsDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+import ProgressiveImage from "@/components/ProgressiveImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -243,22 +244,14 @@ const Wardrobe = () => {
             <Card key={item.id} className="shadow-card hover:shadow-elegant transition-all duration-300 group">
               <CardContent className="p-0">
                 {/* Photo Section */}
-                {item.photo_url ? (
-                  <div className="aspect-square overflow-hidden rounded-t-lg">
-                    <img 
-                      src={item.photo_url} 
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-square bg-gradient-subtle rounded-t-lg flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <div className="text-4xl mb-2">👕</div>
-                      <p className="text-sm">No photo</p>
-                    </div>
-                  </div>
-                )}
+                <div className="aspect-square overflow-hidden rounded-t-lg">
+                  <ProgressiveImage
+                    src={item.photo_url}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 300px"
+                  />
+                </div>
                 
                  {/* Content Section */}
                  <div className="p-4 sm:p-6">

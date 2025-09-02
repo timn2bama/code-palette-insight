@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Search, Calendar, Trash2, Edit, Eye, Shirt } from "lucide-react";
 import ViewOutfitDialog from "@/components/ViewOutfitDialog";
+import ProgressiveImage from "@/components/ProgressiveImage";
 
 interface OutfitWithItems {
   id: string;
@@ -330,17 +331,12 @@ const Outfits = () => {
                             className="relative group/item bg-secondary/20 rounded-lg p-2 hover:bg-secondary/40 transition-colors"
                           >
                             <div className="flex items-center gap-2">
-                              {outfitItem.wardrobe_items.photo_url ? (
-                                <img
-                                  src={outfitItem.wardrobe_items.photo_url}
-                                  alt={outfitItem.wardrobe_items.name}
-                                  className="w-8 h-8 object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 bg-gradient-subtle rounded flex items-center justify-center text-xs">
-                                  👕
-                                </div>
-                              )}
+                              <ProgressiveImage
+                                src={outfitItem.wardrobe_items.photo_url}
+                                alt={outfitItem.wardrobe_items.name}
+                                className="w-8 h-8 object-cover rounded"
+                                sizes="32px"
+                              />
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium truncate">
                                   {outfitItem.wardrobe_items.name}

@@ -46,9 +46,8 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
       img.onload = () => {
         console.log('Original image dimensions:', img.width, 'x', img.height);
         
-        // Very aggressive compression for phone cameras
-        // Max 800px to ensure it stays under limits
-        const maxSize = 800;
+        // Optimize for quality and size balance - max 1280px long edge
+        const maxSize = 1280;
         let { width, height } = img;
         
         // Always resize if either dimension is over maxSize
@@ -67,18 +66,52 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress with much lower quality for smaller files
+        // Draw image
         ctx?.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            console.log('Blob size after compression:', blob.size, 'bytes');
-            const compressedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
+        
+        // Generate both WebP and JPEG versions
+        const promises = [
+          new Promise<{blob: Blob | null, type: string}>((resolve) => {
+            canvas.toBlob((blob) => {
+              resolve({ blob, type: 'image/webp' });
+            }, 'image/webp', 0.8);
+          }),
+          new Promise<{blob: Blob | null, type: string}>((resolve) => {
+            canvas.toBlob((blob) => {
+              resolve({ blob, type: 'image/jpeg' });
+            }, 'image/jpeg', 0.7);
+          })
+        ];
+        
+        Promise.all(promises).then((results) => {
+          const webp = results[0];
+          const jpeg = results[1];
+          
+          // Pick the smaller format
+          let chosenBlob = jpeg.blob;
+          let chosenType = jpeg.type;
+          let extension = 'jpg';
+          
+          if (webp.blob && jpeg.blob && webp.blob.size < jpeg.blob.size) {
+            chosenBlob = webp.blob;
+            chosenType = webp.type;
+            extension = 'webp';
+          }
+          
+          if (chosenBlob) {
+            console.log(`Using ${chosenType}, size: ${chosenBlob.size} bytes`);
+            
+            // Update filename extension
+            const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+            const newFileName = `${nameWithoutExt}.${extension}`;
+            
+            const compressedFile = new File([chosenBlob], newFileName, {
+              type: chosenType,
               lastModified: Date.now(),
             });
             resolve(compressedFile);
           }
-        }, 'image/jpeg', 0.5); // Much lower quality for smaller file size
+        });
       };
       
       img.src = URL.createObjectURL(file);

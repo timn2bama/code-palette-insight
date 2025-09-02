@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ChevronRight, Upload, Eye, Camera, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProgressiveImage from "@/components/ProgressiveImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -167,17 +168,11 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
               <div className="aspect-[3/4] rounded-lg overflow-hidden bg-secondary/20">
                 {hasPhotos ? (
                   <>
-                    <img
+                    <ProgressiveImage
                       src={photos[currentPhotoIndex]}
                       alt={`${item.name} - Photo ${currentPhotoIndex + 1}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error('ViewDetailsDialog - Image failed to load:', photos[currentPhotoIndex]);
-                        console.error('Image error event:', e);
-                      }}
-                      onLoad={() => {
-                        console.log('ViewDetailsDialog - Image loaded successfully:', photos[currentPhotoIndex]);
-                      }}
+                      sizes="(max-width: 640px) 100vw, 600px"
                     />
                     
                     {/* Navigation Arrows */}
@@ -257,10 +252,11 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <img
+                    <ProgressiveImage
                       src={photo}
                       alt={`${item.name} thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
+                      sizes="64px"
                     />
                   </button>
                 ))}
