@@ -30,6 +30,7 @@ const Navigation = () => {
     { name: "Home", path: "/", icon: "🏠" },
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
     { name: "Outfits", path: "/outfits", icon: "✨" },
+    { name: "Explore", path: "/explore", icon: "🔍" },
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
     { name: "Subscription", path: "/subscription", icon: "💎" },

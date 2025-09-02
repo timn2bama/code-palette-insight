@@ -69,7 +69,8 @@ const CreateOutfitDialog = ({ onOutfitCreated, children, initialItem }: CreateOu
           name: nameValidation.sanitized,
           description: descriptionValidation.sanitized || null,
           occasion: formData.occasion || null,
-          season: formData.season || null
+          season: formData.season || null,
+          is_public: false
         })
         .select()
         .single();

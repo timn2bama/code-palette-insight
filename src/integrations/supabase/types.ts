@@ -184,6 +184,93 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_entries: {
+        Row: {
+          caption: string | null
+          challenge_id: string
+          created_at: string
+          id: string
+          outfit_id: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          challenge_id: string
+          created_at?: string
+          id?: string
+          outfit_id: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          outfit_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenge_votes: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          entry_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          end_at: string
+          id: string
+          is_public: boolean
+          start_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_at: string
+          id?: string
+          is_public?: boolean
+          start_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_at?: string
+          id?: string
+          is_public?: boolean
+          start_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       funnel_pages: {
         Row: {
           content: Json
@@ -296,6 +383,30 @@ export type Database = {
           },
         ]
       }
+      outfit_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          outfit_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          outfit_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          outfit_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       outfit_items: {
         Row: {
           created_at: string
@@ -332,11 +443,54 @@ export type Database = {
           },
         ]
       }
+      outfit_likes: {
+        Row: {
+          created_at: string
+          outfit_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          outfit_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          outfit_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      outfit_ratings: {
+        Row: {
+          created_at: string
+          outfit_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          outfit_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          outfit_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       outfits: {
         Row: {
           created_at: string
           description: string | null
           id: string
+          is_public: boolean
           name: string
           occasion: string | null
           season: string | null
@@ -347,6 +501,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_public?: boolean
           name: string
           occasion?: string | null
           season?: string | null
@@ -357,6 +512,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_public?: boolean
           name?: string
           occasion?: string | null
           season?: string | null
@@ -663,12 +819,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_style_preferences: {
+        Row: {
+          created_at: string
+          disliked_colors: string[] | null
+          favorite_colors: string[] | null
+          preferences: Json
+          style_keywords: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          disliked_colors?: string[] | null
+          favorite_colors?: string[] | null
+          preferences?: Json
+          style_keywords?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          disliked_colors?: string[] | null
+          favorite_colors?: string[] | null
+          preferences?: Json
+          style_keywords?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wardrobe_items: {
         Row: {
           brand: string | null
           category: string
           color: string | null
+          color_palette: Json | null
           created_at: string
+          detected_labels: Json | null
+          dominant_color: string | null
           id: string
           last_worn: string | null
           name: string
@@ -682,7 +871,10 @@ export type Database = {
           brand?: string | null
           category: string
           color?: string | null
+          color_palette?: Json | null
           created_at?: string
+          detected_labels?: Json | null
+          dominant_color?: string | null
           id?: string
           last_worn?: string | null
           name: string
@@ -696,7 +888,10 @@ export type Database = {
           brand?: string | null
           category?: string
           color?: string | null
+          color_palette?: Json | null
           created_at?: string
+          detected_labels?: Json | null
+          dominant_color?: string | null
           id?: string
           last_worn?: string | null
           name?: string

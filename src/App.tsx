@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 // Lazy load all other pages
 const Wardrobe = lazy(() => import('./pages/Wardrobe'));
 const Outfits = lazy(() => import('./pages/Outfits'));
+const Explore = lazy(() => import('./pages/Explore'));
 const Weather = lazy(() => import('./pages/Weather'));
 const Services = lazy(() => import('./pages/Services'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/blog/admin" element={<ProtectedRoute><BlogAdmin /></ProtectedRoute>} />
                 <Route path="/wardrobe" element={<ProtectedRoute><Wardrobe /></ProtectedRoute>} />
                 <Route path="/outfits" element={<ProtectedRoute><Outfits /></ProtectedRoute>} />
+                <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
                 <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
                 <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
                 <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
