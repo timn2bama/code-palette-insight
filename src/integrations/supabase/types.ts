@@ -271,6 +271,47 @@ export type Database = {
         }
         Relationships: []
       }
+      external_shopping_links: {
+        Row: {
+          available: boolean | null
+          created_at: string | null
+          id: string
+          last_checked: string | null
+          platform: string
+          price: number | null
+          product_url: string
+          wardrobe_item_id: string | null
+        }
+        Insert: {
+          available?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_checked?: string | null
+          platform: string
+          price?: number | null
+          product_url: string
+          wardrobe_item_id?: string | null
+        }
+        Update: {
+          available?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_checked?: string | null
+          platform?: string
+          price?: number | null
+          product_url?: string
+          wardrobe_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_shopping_links_wardrobe_item_id_fkey"
+            columns: ["wardrobe_item_id"]
+            isOneToOne: false
+            referencedRelation: "wardrobe_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_pages: {
         Row: {
           content: Json
@@ -341,6 +382,36 @@ export type Database = {
           settings?: Json
           slug?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      integration_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          integration_type: string
+          is_active: boolean | null
+          settings: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          integration_type: string
+          is_active?: boolean | null
+          settings?: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean | null
+          settings?: Json
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -617,6 +688,42 @@ export type Database = {
         }
         Relationships: []
       }
+      seasonal_analytics: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          season: string
+          top_items: Json | null
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          season: string
+          top_items?: Json | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          season?: string
+          top_items?: Json | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           created_at: string
@@ -686,6 +793,84 @@ export type Database = {
           },
         ]
       }
+      shopping_recommendations: {
+        Row: {
+          category: string
+          created_at: string | null
+          external_links: Json | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          reason: string | null
+          recommendation_type: string
+          suggested_items: Json | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          external_links?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          reason?: string | null
+          recommendation_type: string
+          suggested_items?: Json | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          external_links?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          reason?: string | null
+          recommendation_type?: string
+          suggested_items?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stylist_consultations: {
+        Row: {
+          consultation_type: string
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          price: number | null
+          scheduled_date: string | null
+          status: string | null
+          stylist_feedback: Json | null
+          user_id: string
+        }
+        Insert: {
+          consultation_type: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          price?: number | null
+          scheduled_date?: string | null
+          status?: string | null
+          stylist_feedback?: Json | null
+          user_id: string
+        }
+        Update: {
+          consultation_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          price?: number | null
+          scheduled_date?: string | null
+          status?: string | null
+          stylist_feedback?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -719,6 +904,39 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      subscription_tiers: {
+        Row: {
+          created_at: string | null
+          features: Json
+          id: string
+          is_active: boolean | null
+          limits: Json
+          price_monthly: number | null
+          price_yearly: number | null
+          tier_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          limits?: Json
+          price_monthly?: number | null
+          price_yearly?: number | null
+          tier_name: string
+        }
+        Update: {
+          created_at?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          limits?: Json
+          price_monthly?: number | null
+          price_yearly?: number | null
+          tier_name?: string
         }
         Relationships: []
       }
@@ -819,6 +1037,36 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_tracking: {
+        Row: {
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string | null
+          id: string
+          usage_count: number | null
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string | null
+          id?: string
+          usage_count?: number | null
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string | null
+          id?: string
+          usage_count?: number | null
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_style_preferences: {
         Row: {
           created_at: string
@@ -848,6 +1096,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wardrobe_analytics: {
+        Row: {
+          cost_per_wear: number | null
+          created_at: string | null
+          id: string
+          last_calculated: string | null
+          total_cost: number | null
+          updated_at: string | null
+          user_id: string
+          wardrobe_item_id: string
+          wear_count: number | null
+        }
+        Insert: {
+          cost_per_wear?: number | null
+          created_at?: string | null
+          id?: string
+          last_calculated?: string | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id: string
+          wardrobe_item_id: string
+          wear_count?: number | null
+        }
+        Update: {
+          cost_per_wear?: number | null
+          created_at?: string | null
+          id?: string
+          last_calculated?: string | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id?: string
+          wardrobe_item_id?: string
+          wear_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wardrobe_analytics_wardrobe_item_id_fkey"
+            columns: ["wardrobe_item_id"]
+            isOneToOne: false
+            referencedRelation: "wardrobe_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wardrobe_items: {
         Row: {
@@ -924,6 +1216,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_cost_per_wear: {
+        Args: { item_id: string }
+        Returns: number
+      }
       is_member: {
         Args: { _team_id: string }
         Returns: boolean
