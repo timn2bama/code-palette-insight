@@ -31,6 +31,8 @@ const Navigation = () => {
     { name: "Wardrobe", path: "/wardrobe", icon: "👔" },
     { name: "Outfits", path: "/outfits", icon: "✨" },
     { name: "Explore", path: "/explore", icon: "🔍" },
+    { name: "Analytics", path: "/analytics", icon: "📊" },
+    { name: "Integrations", path: "/integrations", icon: "🔗" },
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
     { name: "Subscription", path: "/subscription", icon: "💎" },

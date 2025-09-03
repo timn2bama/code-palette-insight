@@ -18,6 +18,8 @@ import Auth from "./pages/Auth";
 const Wardrobe = lazy(() => import('./pages/Wardrobe'));
 const Outfits = lazy(() => import('./pages/Outfits'));
 const Explore = lazy(() => import('./pages/Explore'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Integrations = lazy(() => import('./pages/Integrations'));
 const Weather = lazy(() => import('./pages/Weather'));
 const Services = lazy(() => import('./pages/Services'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -70,6 +72,8 @@ const App = () => (
                 <Route path="/wardrobe" element={<ProtectedRoute><Wardrobe /></ProtectedRoute>} />
                 <Route path="/outfits" element={<ProtectedRoute><Outfits /></ProtectedRoute>} />
                 <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                 <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
                 <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
                 <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
