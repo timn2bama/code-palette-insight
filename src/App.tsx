@@ -32,6 +32,7 @@ const Help = lazy(() => import('./pages/Help'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const BlogAdmin = lazy(() => import('./pages/BlogAdmin'));
+const MobileAccessibility = lazy(() => import('./pages/MobileAccessibility'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +78,7 @@ const App = () => (
                 <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
                 <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
                 <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+                <Route path="/mobile" element={<ProtectedRoute><MobileAccessibility /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

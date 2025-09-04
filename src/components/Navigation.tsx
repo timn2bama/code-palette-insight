@@ -36,6 +36,7 @@ const Navigation = () => {
     { name: "Weather", path: "/weather", icon: "🌤️" },
     { name: "Services", path: "/services", icon: "🔧" },
     { name: "Subscription", path: "/subscription", icon: "💎" },
+    { name: "Mobile & Accessibility", path: "/mobile", icon: "📱" },
   ];
 
   return (
