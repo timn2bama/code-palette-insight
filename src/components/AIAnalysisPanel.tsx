@@ -300,3 +300,5 @@ export const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({ onAnalysisComp
     </Card>
   );
 };
+
+export default AIAnalysisPanel;

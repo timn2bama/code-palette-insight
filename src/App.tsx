@@ -33,6 +33,7 @@ const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const BlogAdmin = lazy(() => import('./pages/BlogAdmin'));
 const MobileAccessibility = lazy(() => import('./pages/MobileAccessibility'));
+const AIAnalysisPanel = lazy(() => import('./components/AIAnalysisPanel'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,7 @@ const App = () => (
                 <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
                 <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
                 <Route path="/mobile" element={<ProtectedRoute><MobileAccessibility /></ProtectedRoute>} />
+                <Route path="/ai-analysis" element={<ProtectedRoute><AIAnalysisPanel /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
