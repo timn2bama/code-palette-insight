@@ -9,6 +9,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { PerformanceMonitor } from "@/components/PerformanceMonitor";
+import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
+import { useRealUserMonitoring } from "@/hooks/useRealUserMonitoring";
 
 // Keep Index eager for fastest first paint
 import Index from "./pages/Index";
@@ -46,6 +49,45 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppContent = () => {
+  usePerformanceMonitoring();
+  useRealUserMonitoring();
+  
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen grid place-items-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    }>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/blog/admin" element={<ProtectedRoute><BlogAdmin /></ProtectedRoute>} />
+        <Route path="/wardrobe" element={<ProtectedRoute><Wardrobe /></ProtectedRoute>} />
+        <Route path="/outfits" element={<ProtectedRoute><Outfits /></ProtectedRoute>} />
+        <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+        <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
+        <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
+        <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+        <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+        <Route path="/mobile" element={<ProtectedRoute><MobileAccessibility /></ProtectedRoute>} />
+        <Route path="/ai-analysis" element={<ProtectedRoute><AIAnalysisPanel /></ProtectedRoute>} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <PerformanceMonitor />
+    </Suspense>
+  );
+};
+
 const App = () => (
   <HelmetProvider>
     <ErrorBoundary>
@@ -55,36 +97,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={
-              <div className="min-h-screen grid place-items-center">
-                <LoadingSpinner size="lg" />
-              </div>
-            }>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/blog/admin" element={<ProtectedRoute><BlogAdmin /></ProtectedRoute>} />
-                <Route path="/wardrobe" element={<ProtectedRoute><Wardrobe /></ProtectedRoute>} />
-                <Route path="/outfits" element={<ProtectedRoute><Outfits /></ProtectedRoute>} />
-                <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-                <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
-                <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-                <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
-                <Route path="/mobile" element={<ProtectedRoute><MobileAccessibility /></ProtectedRoute>} />
-                <Route path="/ai-analysis" element={<ProtectedRoute><AIAnalysisPanel /></ProtectedRoute>} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <AppContent />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
