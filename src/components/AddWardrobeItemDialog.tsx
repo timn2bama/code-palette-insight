@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { compressImage } from '../utils/imageCompression';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -139,7 +140,7 @@ const AddWardrobeItemDialog = ({ onItemAdded }: AddWardrobeItemDialogProps) => {
     let processedFile = file;
     
     // Always compress images from phone cameras (typically > 2MB) or large images
-    if (file.size > 2 * 1024 * 1024) {
+  if (file.size > 2_000_000) {
       console.log('File size exceeds 2MB, compressing...', file.size, 'bytes');
       toast({
         title: "Compressing image...",

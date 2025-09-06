@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { compressImage } from '../utils/imageCompression';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,14 +77,17 @@ const ViewDetailsDialog = ({ item, children, onItemUpdated }: ViewDetailsDialogP
     setUploading(true);
     
     try {
-      const fileExt = file.name.split('.').pop();
+      // Compress large images before uploading to save bandwidth and storage
+      const uploadFile = file.size > 2_000_000 ? await compressImage(file) : file;
+
+      const fileExt = uploadFile.name.split('.').pop();
       const fileName = `${user.id}/${item.id}/${Date.now()}.${fileExt}`;
 
-      console.log('ViewDetailsDialog - Uploading to:', fileName);
+      console.log('ViewDetailsDialog - Uploading to:', fileName, 'originalSize:', file.size, 'uploadSize:', uploadFile.size);
 
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('wardrobe-photos')
-        .upload(fileName, file);
+        .upload(fileName, uploadFile);
 
       if (uploadError) {
         console.error('ViewDetailsDialog - Upload error:', uploadError);
