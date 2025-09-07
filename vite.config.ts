@@ -27,10 +27,18 @@ export default defineConfig(({ mode }) => ({
           supabase: ['@supabase/supabase-js'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
           router: ['react-router-dom'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge']
+          utils: ['date-fns', 'clsx', 'tailwind-merge'],
+          charts: ['recharts'],
+          icons: ['lucide-react'],
+          forms: ['react-hook-form', '@hookform/resolvers'],
+          monitoring: ['web-vitals']
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for better debugging
+    sourcemap: true,
+    // Optimize bundle size
+    minify: 'terser'
   }
 }));

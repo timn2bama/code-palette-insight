@@ -12,6 +12,8 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import { useRealUserMonitoring } from "@/hooks/useRealUserMonitoring";
+import { useErrorLogger } from "@/hooks/useErrorLogger";
+import { useOfflineFirst } from "@/hooks/useOfflineFirst";
 
 // Keep Index eager for fastest first paint
 import Index from "./pages/Index";
@@ -52,6 +54,8 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   usePerformanceMonitoring();
   useRealUserMonitoring();
+  useErrorLogger();
+  const { isOnline, pendingActions } = useOfflineFirst();
   
   return (
     <Suspense fallback={
