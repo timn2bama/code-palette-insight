@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
     // Enable source maps for better debugging
     sourcemap: true,
-    // Optimize bundle size
-    minify: 'terser'
+    // Optimize bundle size only in production
+    minify: mode === 'production' ? 'terser' : false
   }
 }));
