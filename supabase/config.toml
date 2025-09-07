@@ -1,3 +1,5 @@
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
 project_id = "oikpwuraixlnjvyrmnwx"
 
 [functions.sitemap]
@@ -5,42 +7,6 @@ verify_jwt = false
 
 [functions.google-clothing-search]
 verify_jwt = false
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-
-[graphql]
-enabled = true
-port = 54329
-
-[inbound_smtp]
-enabled = false
-port = 54330
-emails_from_external = true
-
-[db]
-enabled = true
-port = 54322
-
-[studio]
-enabled = true
-port = 54323
-
-[storage]
-enabled = true
-port = 54324
-image_transformation_enabled = true
-
-[auth]
-enabled = true
-port = 54325
-external_providers = []
-
-[edge_functions]
-enabled = true
-port = 54326
 
 [functions.get-weather]
 verify_jwt = false
