@@ -184,6 +184,56 @@ export type Database = {
         }
         Relationships: []
       }
+      carbon_footprint_items: {
+        Row: {
+          created_at: string
+          disposal_impact: number | null
+          id: string
+          last_calculated: string
+          manufacturing_impact: number | null
+          total_footprint: number | null
+          transportation_impact: number | null
+          updated_at: string
+          usage_impact: number | null
+          user_id: string
+          wardrobe_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          disposal_impact?: number | null
+          id?: string
+          last_calculated?: string
+          manufacturing_impact?: number | null
+          total_footprint?: number | null
+          transportation_impact?: number | null
+          updated_at?: string
+          usage_impact?: number | null
+          user_id: string
+          wardrobe_item_id: string
+        }
+        Update: {
+          created_at?: string
+          disposal_impact?: number | null
+          id?: string
+          last_calculated?: string
+          manufacturing_impact?: number | null
+          total_footprint?: number | null
+          transportation_impact?: number | null
+          updated_at?: string
+          usage_impact?: number | null
+          user_id?: string
+          wardrobe_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carbon_footprint_items_wardrobe_item_id_fkey"
+            columns: ["wardrobe_item_id"]
+            isOneToOne: false
+            referencedRelation: "wardrobe_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_entries: {
         Row: {
           caption: string | null
@@ -268,6 +318,102 @@ export type Database = {
           start_at?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_outfit_suggestions: {
+        Row: {
+          ai_reasoning: string | null
+          created_at: string
+          id: string
+          occasion: string | null
+          outfit_data: Json
+          style_preference: string | null
+          suggestion_date: string
+          updated_at: string
+          user_feedback: string | null
+          user_id: string
+          was_worn: boolean | null
+          weather_context: Json | null
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          created_at?: string
+          id?: string
+          occasion?: string | null
+          outfit_data: Json
+          style_preference?: string | null
+          suggestion_date: string
+          updated_at?: string
+          user_feedback?: string | null
+          user_id: string
+          was_worn?: boolean | null
+          weather_context?: Json | null
+        }
+        Update: {
+          ai_reasoning?: string | null
+          created_at?: string
+          id?: string
+          occasion?: string | null
+          outfit_data?: Json
+          style_preference?: string | null
+          suggestion_date?: string
+          updated_at?: string
+          user_feedback?: string | null
+          user_id?: string
+          was_worn?: boolean | null
+          weather_context?: Json | null
+        }
+        Relationships: []
+      }
+      event_outfit_requests: {
+        Row: {
+          created_at: string
+          dress_code: string | null
+          event_date: string
+          event_title: string
+          event_type: string
+          id: string
+          location: string | null
+          selected_outfit_id: string | null
+          special_requirements: string | null
+          status: string
+          suggested_outfits: Json | null
+          updated_at: string
+          user_id: string
+          weather_requirements: string | null
+        }
+        Insert: {
+          created_at?: string
+          dress_code?: string | null
+          event_date: string
+          event_title: string
+          event_type: string
+          id?: string
+          location?: string | null
+          selected_outfit_id?: string | null
+          special_requirements?: string | null
+          status?: string
+          suggested_outfits?: Json | null
+          updated_at?: string
+          user_id: string
+          weather_requirements?: string | null
+        }
+        Update: {
+          created_at?: string
+          dress_code?: string | null
+          event_date?: string
+          event_title?: string
+          event_type?: string
+          id?: string
+          location?: string | null
+          selected_outfit_id?: string | null
+          special_requirements?: string | null
+          status?: string
+          suggested_outfits?: Json | null
+          updated_at?: string
+          user_id?: string
+          weather_requirements?: string | null
         }
         Relationships: []
       }
@@ -454,6 +600,80 @@ export type Database = {
           },
         ]
       }
+      marketplace_items: {
+        Row: {
+          brand: string | null
+          buyer_id: string | null
+          category: string
+          condition: string
+          created_at: string
+          description: string | null
+          id: string
+          is_available: boolean | null
+          photos: Json | null
+          price: number
+          seller_id: string
+          shipping_included: boolean | null
+          size: string | null
+          sold_at: string | null
+          sustainability_score: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          wardrobe_item_id: string | null
+        }
+        Insert: {
+          brand?: string | null
+          buyer_id?: string | null
+          category: string
+          condition: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          photos?: Json | null
+          price: number
+          seller_id: string
+          shipping_included?: boolean | null
+          size?: string | null
+          sold_at?: string | null
+          sustainability_score?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          wardrobe_item_id?: string | null
+        }
+        Update: {
+          brand?: string | null
+          buyer_id?: string | null
+          category?: string
+          condition?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          photos?: Json | null
+          price?: number
+          seller_id?: string
+          shipping_included?: boolean | null
+          size?: string | null
+          sold_at?: string | null
+          sustainability_score?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          wardrobe_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_items_wardrobe_item_id_fkey"
+            columns: ["wardrobe_item_id"]
+            isOneToOne: false
+            referencedRelation: "wardrobe_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outfit_comments: {
         Row: {
           content: string
@@ -592,6 +812,63 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_shopping_requests: {
+        Row: {
+          brand_preferences: string[] | null
+          budget_max: number | null
+          budget_min: number | null
+          color_preferences: string[] | null
+          created_at: string
+          fulfillment_notes: string | null
+          id: string
+          priority_categories: string[] | null
+          recommendations: Json | null
+          request_type: string
+          size_requirements: Json | null
+          status: string
+          style_preferences: string | null
+          sustainability_requirements: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_preferences?: string[] | null
+          budget_max?: number | null
+          budget_min?: number | null
+          color_preferences?: string[] | null
+          created_at?: string
+          fulfillment_notes?: string | null
+          id?: string
+          priority_categories?: string[] | null
+          recommendations?: Json | null
+          request_type: string
+          size_requirements?: Json | null
+          status?: string
+          style_preferences?: string | null
+          sustainability_requirements?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_preferences?: string[] | null
+          budget_max?: number | null
+          budget_min?: number | null
+          color_preferences?: string[] | null
+          created_at?: string
+          fulfillment_notes?: string | null
+          id?: string
+          priority_categories?: string[] | null
+          recommendations?: Json | null
+          request_type?: string
+          size_requirements?: Json | null
+          status?: string
+          style_preferences?: string | null
+          sustainability_requirements?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -618,6 +895,133 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rental_bookings: {
+        Row: {
+          created_at: string
+          deposit_paid: number
+          end_date: string
+          id: string
+          rental_item_id: string
+          renter_id: string
+          return_condition: string | null
+          review_comment: string | null
+          review_rating: number | null
+          special_instructions: string | null
+          start_date: string
+          status: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_paid: number
+          end_date: string
+          id?: string
+          rental_item_id: string
+          renter_id: string
+          return_condition?: string | null
+          review_comment?: string | null
+          review_rating?: number | null
+          special_instructions?: string | null
+          start_date: string
+          status?: string
+          total_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_paid?: number
+          end_date?: string
+          id?: string
+          rental_item_id?: string
+          renter_id?: string
+          return_condition?: string | null
+          review_comment?: string | null
+          review_rating?: number | null
+          special_instructions?: string | null
+          start_date?: string
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_bookings_rental_item_id_fkey"
+            columns: ["rental_item_id"]
+            isOneToOne: false
+            referencedRelation: "rental_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rental_items: {
+        Row: {
+          brand: string | null
+          care_instructions: string | null
+          category: string
+          created_at: string
+          daily_rate: number
+          deposit_amount: number
+          description: string | null
+          id: string
+          is_available: boolean | null
+          owner_id: string
+          photos: Json | null
+          rental_terms: string | null
+          size: string | null
+          title: string
+          updated_at: string
+          wardrobe_item_id: string | null
+          weekly_rate: number | null
+        }
+        Insert: {
+          brand?: string | null
+          care_instructions?: string | null
+          category: string
+          created_at?: string
+          daily_rate: number
+          deposit_amount: number
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          owner_id: string
+          photos?: Json | null
+          rental_terms?: string | null
+          size?: string | null
+          title: string
+          updated_at?: string
+          wardrobe_item_id?: string | null
+          weekly_rate?: number | null
+        }
+        Update: {
+          brand?: string | null
+          care_instructions?: string | null
+          category?: string
+          created_at?: string
+          daily_rate?: number
+          deposit_amount?: number
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          owner_id?: string
+          photos?: Json | null
+          rental_terms?: string | null
+          size?: string | null
+          title?: string
+          updated_at?: string
+          wardrobe_item_id?: string | null
+          weekly_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_items_wardrobe_item_id_fkey"
+            columns: ["wardrobe_item_id"]
+            isOneToOne: false
+            referencedRelation: "wardrobe_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_services: {
         Row: {
@@ -832,6 +1236,45 @@ export type Database = {
         }
         Relationships: []
       }
+      style_evolution_tracking: {
+        Row: {
+          achievements: string[] | null
+          confidence_level: number | null
+          created_at: string
+          id: string
+          insights: Json | null
+          mood_tags: string[] | null
+          style_goals: string[] | null
+          style_metrics: Json
+          tracking_date: string
+          user_id: string
+        }
+        Insert: {
+          achievements?: string[] | null
+          confidence_level?: number | null
+          created_at?: string
+          id?: string
+          insights?: Json | null
+          mood_tags?: string[] | null
+          style_goals?: string[] | null
+          style_metrics: Json
+          tracking_date: string
+          user_id: string
+        }
+        Update: {
+          achievements?: string[] | null
+          confidence_level?: number | null
+          created_at?: string
+          id?: string
+          insights?: Json | null
+          mood_tags?: string[] | null
+          style_goals?: string[] | null
+          style_metrics?: Json
+          tracking_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stylist_consultations: {
         Row: {
           consultation_type: string
@@ -937,6 +1380,45 @@ export type Database = {
           price_monthly?: number | null
           price_yearly?: number | null
           tier_name?: string
+        }
+        Relationships: []
+      }
+      sustainability_metrics: {
+        Row: {
+          calculated_at: string
+          id: string
+          metric_type: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          source_data: Json | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          metric_type: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          source_data?: Json | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          metric_type?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          source_data?: Json | null
+          unit?: string
+          user_id?: string
+          value?: number
         }
         Relationships: []
       }
