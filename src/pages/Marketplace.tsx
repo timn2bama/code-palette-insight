@@ -1,6 +1,6 @@
 import React from 'react';
 import MarketplaceHome from '@/components/marketplace/MarketplaceHome';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 
 const Marketplace = () => {
   return (

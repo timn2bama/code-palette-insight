@@ -1,6 +1,6 @@
 import React from 'react';
 import AIStylistDashboard from '@/components/ai-stylist/AIStylistDashboard';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 
 const AIStylist = () => {
   return (
