@@ -26,7 +26,10 @@ export const useUploadLimits = () => {
 
     try {
       // Check subscription status
-      const { data: subData } = await supabase.functions.invoke('check-subscription');
+      const { data: subData, error: subError } = await supabase.functions.invoke('check-subscription');
+      if (subError) {
+        console.warn('Subscription check failed, defaulting to free limits:', subError);
+      }
       const isSubscribed = subData?.subscribed || false;
 
       // Get current category counts
@@ -55,6 +58,11 @@ export const useUploadLimits = () => {
       setCategoryCounts(categoryCountsArray);
     } catch (error) {
       console.error('Error checking upload limits:', error);
+      // Default to free limits on error
+      setUploadLimits({
+        maxUploadsPerCategory: 4,
+        isUnlimited: false
+      });
     } finally {
       setLoading(false);
     }

@@ -45,6 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSubscriptionStatus(data);
     } catch (error) {
       console.error('Error checking subscription:', error);
+      // Set to unsubscribed state on error to avoid blocking UI
+      setSubscriptionStatus({ subscribed: false });
     }
   };
 

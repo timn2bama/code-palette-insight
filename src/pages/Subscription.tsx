@@ -33,11 +33,8 @@ export default function Subscription() {
       setSubscriptionStatus(data);
     } catch (error) {
       console.error('Error checking subscription:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check subscription status",
-        variant: "destructive",
-      });
+      // Set default state instead of showing repeated error toasts
+      setSubscriptionStatus({ subscribed: false });
     } finally {
       setCheckingStatus(false);
     }
