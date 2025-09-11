@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useSubscriptionQuery } from "@/hooks/queries/useAuth";
+import { useWardrobeItemsByCategory } from "@/hooks/queries/useWardrobeItems";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UploadLimits {
@@ -13,59 +13,18 @@ interface CategoryCount {
 }
 
 export const useUploadLimits = () => {
-  const [uploadLimits, setUploadLimits] = useState<UploadLimits>({
-    maxUploadsPerCategory: 4,
-    isUnlimited: false
-  });
-  const [categoryCounts, setCategoryCounts] = useState<CategoryCount[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
-  const checkSubscriptionAndLimits = async () => {
-    if (!user) return;
-
-    try {
-      // Check subscription status
-      const { data: subData, error: subError } = await supabase.functions.invoke('check-subscription');
-      if (subError) {
-        console.warn('Subscription check failed, defaulting to free limits:', subError);
-      }
-      const isSubscribed = subData?.subscribed || false;
-
-      // Get current category counts
-      const { data: items, error } = await supabase
-        .from('wardrobe_items')
-        .select('category')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Count items per category
-      const counts = items?.reduce((acc: { [key: string]: number }, item) => {
-        acc[item.category] = (acc[item.category] || 0) + 1;
-        return acc;
-      }, {}) || {};
-
-      const categoryCountsArray = Object.entries(counts).map(([category, count]) => ({
-        category,
-        count: count as number
-      }));
-
-      setUploadLimits({
-        maxUploadsPerCategory: isSubscribed ? Infinity : 4,
-        isUnlimited: isSubscribed
-      });
-      setCategoryCounts(categoryCountsArray);
-    } catch (error) {
-      console.error('Error checking upload limits:', error);
-      // Default to free limits on error
-      setUploadLimits({
-        maxUploadsPerCategory: 4,
-        isUnlimited: false
-      });
-    } finally {
-      setLoading(false);
-    }
+  
+  // Use React Query for subscription data
+  const { data: subscriptionData } = useSubscriptionQuery(user?.id);
+  const { data: categoryCounts = [], isLoading: categoryCountsLoading } = useWardrobeItemsByCategory(user?.id) as { data: CategoryCount[], isLoading: boolean };
+  
+  const isSubscribed = subscriptionData?.subscribed || false;
+  const loading = categoryCountsLoading;
+  
+  const uploadLimits: UploadLimits = {
+    maxUploadsPerCategory: isSubscribed ? Infinity : 4,
+    isUnlimited: isSubscribed
   };
 
   const canUploadToCategory = (category: string): boolean => {
@@ -83,16 +42,12 @@ export const useUploadLimits = () => {
     };
   };
 
-  useEffect(() => {
-    checkSubscriptionAndLimits();
-  }, [user]);
-
   return {
     uploadLimits,
     categoryCounts,
     loading,
     canUploadToCategory,
     getCategoryUsage,
-    refreshLimits: checkSubscriptionAndLimits
+    refreshLimits: () => {}, // No longer needed with React Query auto-refetching
   };
 };
