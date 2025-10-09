@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     // Keep 0.0.0.0 if you need to test on other devices on your network,
     // otherwise prefer 'localhost' for better security.
     host: mode === 'production' ? 'localhost' : '0.0.0.0',
-    port: 5173,
+    port: 8080,
     strictPort: false,
   },
   plugins: [
