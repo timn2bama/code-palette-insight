@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Download, Trash2, Shield } from 'lucide-react';
-import { useDataExport } from '@/hooks/useDataExport';
+import { useDataExport } from '@/hooks/queries/useDataExport';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 

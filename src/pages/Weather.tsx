@@ -5,7 +5,7 @@ import { WeatherCard } from "@/components/weather/WeatherCard";
 import { ForecastCard } from "@/components/weather/ForecastCard";
 import { OutfitSuggestions } from "@/components/weather/OutfitSuggestions";
 import { TravelDestinations } from "@/components/weather/TravelDestinations";
-import { useWeatherData } from "@/hooks/useWeatherData";
+import { useWeatherData } from "@/hooks/queries/useWeatherData";
 import { useOutfitSuggestions } from "@/hooks/useOutfitSuggestions";
 import { useTravelDestinations } from "@/hooks/useTravelDestinations";
 
