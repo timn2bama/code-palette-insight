@@ -1,8 +1,31 @@
+/**
+ * Authentication hooks using React Query
+ * 
+ * Provides mutations and queries for user authentication operations
+ * with built-in error handling, rate limiting, and security measures.
+ * 
+ * @module hooks/queries/useAuth
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateEmail, getSafeErrorMessage, rateLimiter } from '@/lib/security';
 
+/**
+ * Hook to fetch user subscription status
+ * 
+ * @param userId - The user ID to check subscription for
+ * @returns Query result with subscription data
+ * 
+ * @example
+ * ```typescript
+ * const { data: subscription, isLoading } = useSubscriptionQuery(user?.id);
+ * if (subscription?.subscribed) {
+ *   // Show premium features
+ * }
+ * ```
+ */
 export const useSubscriptionQuery = (userId?: string) => {
   return useQuery({
     queryKey: ['subscription', userId],
@@ -22,6 +45,29 @@ export const useSubscriptionQuery = (userId?: string) => {
   });
 };
 
+/**
+ * Hook for user sign-in with email/password
+ * 
+ * Features:
+ * - Email validation
+ * - Rate limiting (5 attempts per 5 minutes)
+ * - Automatic toast notifications
+ * - Security error handling
+ * 
+ * @returns Mutation object for sign-in operation
+ * 
+ * @example
+ * ```typescript
+ * const signInMutation = useSignInMutation();
+ * 
+ * const handleSignIn = async () => {
+ *   await signInMutation.mutateAsync({
+ *     email: "user@example.com",
+ *     password: "securePassword123"
+ *   });
+ * };
+ * ```
+ */
 export const useSignInMutation = () => {
   const { toast } = useToast();
   
@@ -67,6 +113,31 @@ export const useSignInMutation = () => {
   });
 };
 
+/**
+ * Hook for user registration
+ * 
+ * Features:
+ * - Email validation and sanitization
+ * - Password strength requirements (min 8 characters)
+ * - Rate limiting (3 attempts per 5 minutes)
+ * - Email confirmation flow
+ * - Automatic toast notifications
+ * 
+ * @returns Mutation object for sign-up operation
+ * 
+ * @example
+ * ```typescript
+ * const signUpMutation = useSignUpMutation();
+ * 
+ * const handleSignUp = async () => {
+ *   await signUpMutation.mutateAsync({
+ *     email: "user@example.com",
+ *     password: "securePassword123",
+ *     displayName: "John Doe"
+ *   });
+ * };
+ * ```
+ */
 export const useSignUpMutation = () => {
   const { toast } = useToast();
   
@@ -129,6 +200,26 @@ export const useSignUpMutation = () => {
   });
 };
 
+/**
+ * Hook for user sign-out
+ * 
+ * Features:
+ * - Clears all cached React Query data
+ * - Automatic toast notification
+ * - Error handling
+ * 
+ * @returns Mutation object for sign-out operation
+ * 
+ * @example
+ * ```typescript
+ * const signOutMutation = useSignOutMutation();
+ * 
+ * const handleSignOut = async () => {
+ *   await signOutMutation.mutateAsync();
+ *   navigate('/auth');
+ * };
+ * ```
+ */
 export const useSignOutMutation = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();

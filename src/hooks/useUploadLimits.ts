@@ -1,7 +1,19 @@
+/**
+ * Upload limits management hook
+ * 
+ * Manages wardrobe item upload limits based on user subscription tier.
+ * Free users have a limit of 4 items per category, while premium users have unlimited uploads.
+ * 
+ * @module hooks/useUploadLimits
+ */
+
 import { useSubscriptionQuery } from "@/hooks/queries/useAuth";
 import { useWardrobeItemsByCategory } from "@/hooks/queries/useWardrobeItems";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Upload limits configuration
+ */
 interface UploadLimits {
   maxUploadsPerCategory: number;
   isUnlimited: boolean;
@@ -12,6 +24,27 @@ interface CategoryCount {
   count: number;
 }
 
+/**
+ * Hook to manage wardrobe item upload limits
+ * 
+ * @returns Upload limits, category counts, and utility functions
+ * 
+ * @example
+ * ```typescript
+ * const { canUploadToCategory, getCategoryUsage, uploadLimits } = useUploadLimits();
+ * 
+ * // Check if user can upload to a category
+ * if (canUploadToCategory('tops')) {
+ *   // Allow upload
+ * } else {
+ *   // Show upgrade prompt
+ * }
+ * 
+ * // Get category usage
+ * const { used, limit } = getCategoryUsage('tops');
+ * console.log(`Used ${used} of ${limit} slots`);
+ * ```
+ */
 export const useUploadLimits = () => {
   const { user } = useAuth();
   

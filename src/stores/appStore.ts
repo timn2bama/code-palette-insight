@@ -1,6 +1,20 @@
+/**
+ * Global application state store using Zustand
+ * 
+ * Manages client-side UI state and user preferences with persistence.
+ * This store is separate from server state (managed by React Query).
+ * 
+ * @module stores/appStore
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/**
+ * Application state interface
+ * 
+ * Includes UI state (sidebar, modals) and persisted user preferences
+ */
 interface AppState {
   // Theme and UI preferences
   sidebarOpen: boolean;
