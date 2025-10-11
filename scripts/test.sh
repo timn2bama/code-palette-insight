@@ -3,6 +3,10 @@
 # Test script for CI/CD pipeline
 echo "Running comprehensive test suite..."
 
+# Unit tests
+echo "🧪 Running unit tests..."
+npm run test
+
 # Type checking
 echo "🔍 Running type check..."
 npx tsc --noEmit
