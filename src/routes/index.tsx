@@ -24,6 +24,7 @@ const Help = lazy(() => import('@/pages/Help'));
 const Blog = lazy(() => import('@/pages/Blog'));
 const BlogPost = lazy(() => import('@/pages/BlogPost'));
 const BlogAdmin = lazy(() => import('@/pages/BlogAdmin'));
+const FAQ = lazy(() => import('@/pages/FAQ'));
 const MobileAccessibility = lazy(() => import('@/pages/MobileAccessibility'));
 const AIAnalysisPanel = lazy(() => import('@/components/AIAnalysisPanel'));
 
@@ -36,6 +37,7 @@ export const routes: RouteObject[] = [
   { path: '/about', element: <About /> },
   { path: '/contact', element: <Contact /> },
   { path: '/help', element: <Help /> },
+  { path: '/faq', element: <FAQ /> },
   { path: '/blog', element: <Blog /> },
   { path: '/blog/:slug', element: <BlogPost /> },
   

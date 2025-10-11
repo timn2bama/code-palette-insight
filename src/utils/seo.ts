@@ -98,10 +98,8 @@ export const generateWebsiteJsonLd = () => ({
   "keywords": "wardrobe management, outfit planning, fashion AI, digital closet, weather-based styling, smart wardrobe, style assistant"
 });
 
-export const generateFAQJsonLd = () => ({
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
+export const generateFAQJsonLd = (faqData?: Array<{ question: string; answer: string }>) => {
+  const defaultFAQs = [
     {
       "@type": "Question",
       "name": "How does SyncStyle help organize my wardrobe?",
@@ -142,8 +140,25 @@ export const generateFAQJsonLd = () => ({
         "text": "Yes! SyncStyle helps you discover nearby dry cleaners, tailors, styling services, and fashion professionals. Connect with local services to maintain and enhance your wardrobe."
       }
     }
-  ]
-});
+  ];
+
+  const mainEntity = faqData 
+    ? faqData.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    : defaultFAQs;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": mainEntity
+  };
+};
 
 // New structured data generators for AI optimization
 export const generateSoftwareApplicationJsonLd = () => ({

@@ -1,0 +1,47 @@
+# Generative Engine Optimization (GEO) guidelines for SyncStyle
+site: https://syncstyle.lovable.app
+sitemap: https://syncstyle.lovable.app/sitemap.xml
+contact: mailto:syncstyleonline@gmail.com
+policy: Public content may be summarized with attribution. Do not include private user data.
+rate-limit: Be respectful. Heavy crawling may be blocked.
+
+key-sections:
+  - /
+  - /about
+  - /contact
+  - /help
+  - /blog
+  - /privacy
+  - /terms
+  - /sustainability
+  - /services
+
+capabilities:
+  - faq-jsonld
+  - website-jsonld
+  - organization-jsonld
+  - software-application-jsonld
+  - blog-post-jsonld
+
+notes: Provide concise answers; prefer bullet points; include source URLs; respect user privacy.
+
+app-description: SyncStyle is an AI-powered digital wardrobe manager that helps users organize clothing, plan outfits, get weather-based recommendations, and track sustainability metrics.
+
+key-features:
+  - Digital wardrobe organization and management
+  - AI-powered outfit recommendations
+  - Weather-based clothing suggestions
+  - Sustainability and carbon footprint tracking
+  - Marketplace for buying/selling/renting clothing
+  - Social features for outfit sharing
+  - Mobile-first design with offline support
+  - Advanced analytics and insights
+
+user-privacy: Authentication-required features (wardrobe, outfits, analytics) contain private user data and should not be crawled or indexed.
+
+public-content:
+  - Blog posts and articles
+  - About and contact pages
+  - Help and FAQ content
+  - Privacy policy and terms of service
+  - Public marketplace listings (when available)
