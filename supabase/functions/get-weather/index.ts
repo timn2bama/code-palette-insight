@@ -67,8 +67,6 @@ serve(async (req) => {
     }
 
     console.log(`Fetching weather for coordinates: ${latitude}, ${longitude}`);
-    console.log(`API Key present: ${apiKey ? 'Yes' : 'No'}`);
-    console.log(`API Key length: ${apiKey ? apiKey.length : 0}`);
 
     // Fetch current weather and forecast from WeatherAPI.com
     const weatherUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${latitude},${longitude}&days=6&aqi=no&alerts=no`;
