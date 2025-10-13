@@ -21,9 +21,6 @@ const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const About = lazy(() => import('@/pages/About'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const Help = lazy(() => import('@/pages/Help'));
-const Blog = lazy(() => import('@/pages/Blog'));
-const BlogPost = lazy(() => import('@/pages/BlogPost'));
-const BlogAdmin = lazy(() => import('@/pages/BlogAdmin'));
 const FAQ = lazy(() => import('@/pages/FAQ'));
 const MobileAccessibility = lazy(() => import('@/pages/MobileAccessibility'));
 const AIAnalysisPanel = lazy(() => import('@/components/AIAnalysisPanel'));
@@ -38,14 +35,8 @@ export const routes: RouteObject[] = [
   { path: '/contact', element: <Contact /> },
   { path: '/help', element: <Help /> },
   { path: '/faq', element: <FAQ /> },
-  { path: '/blog', element: <Blog /> },
-  { path: '/blog/:slug', element: <BlogPost /> },
   
   // Protected routes
-  { 
-    path: '/blog/admin', 
-    element: <ProtectedRoute><BlogAdmin /></ProtectedRoute> 
-  },
   { 
     path: '/wardrobe', 
     element: <ProtectedRoute><Wardrobe /></ProtectedRoute> 
