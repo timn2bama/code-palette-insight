@@ -31,16 +31,49 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const rateLimitKey = `services-${clientIP}`;
+    const now = Date.now();
+    const requests = globalThis.servicesRequests || new Map();
+    const userRequests = requests.get(rateLimitKey) || [];
+    const recentRequests = userRequests.filter((time: number) => now - time < 60000);
+    
+    if (recentRequests.length >= 10) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    recentRequests.push(now);
+    requests.set(rateLimitKey, recentRequests);
+    globalThis.servicesRequests = requests;
+
     const { location, radius = 10000 } = await req.json();
     console.log('Request received:', { location, radius });
     
-    if (!location) {
+    // Input validation
+    if (!location || typeof location !== 'string' || location.length < 2 || location.length > 100) {
       return new Response(
-        JSON.stringify({ error: 'Location is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Location is required and must be 2-100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate location contains only safe characters
+    if (!/^[a-zA-Z0-9\s,.-]+$/.test(location)) {
+      return new Response(
+        JSON.stringify({ error: 'Location contains invalid characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate radius
+    if (typeof radius !== 'number' || radius < 1000 || radius > 50000) {
+      return new Response(
+        JSON.stringify({ error: 'Radius must be between 1000 and 50000 meters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

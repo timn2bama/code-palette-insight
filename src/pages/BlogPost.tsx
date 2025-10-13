@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowLeft } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DOMPurify from 'dompurify';
 
 interface BlogPost {
   id: string;
@@ -131,7 +132,12 @@ export default function BlogPost() {
 
         <div className="prose prose-lg max-w-none">
           <div 
-            dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }}
+            dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(post.content.replace(/\n/g, '<br>'), {
+                ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'blockquote', 'code', 'pre'],
+                ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+              })
+            }}
           />
         </div>
       </article>

@@ -12,7 +12,48 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const rateLimitKey = `weather-multiple-${clientIP}`;
+    const now = Date.now();
+    const requests = globalThis.weatherMultipleRequests || new Map();
+    const userRequests = requests.get(rateLimitKey) || [];
+    const recentRequests = userRequests.filter((time: number) => now - time < 60000);
+    
+    if (recentRequests.length >= 5) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    recentRequests.push(now);
+    requests.set(rateLimitKey, recentRequests);
+    globalThis.weatherMultipleRequests = requests;
+
     const { locations } = await req.json();
+    
+    // Input validation
+    if (!Array.isArray(locations) || locations.length === 0 || locations.length > 10) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid locations array. Must be 1-10 locations.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate each location
+    for (const loc of locations) {
+      if (!loc.latitude || !loc.longitude || 
+          typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number' ||
+          loc.latitude < -90 || loc.latitude > 90 || 
+          loc.longitude < -180 || loc.longitude > 180) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid coordinates in locations array' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    
     const apiKey = Deno.env.get('WEATHERAPI_KEY');
     
     if (!apiKey) {

@@ -17,7 +17,7 @@ export type Database = {
       api_keys: {
         Row: {
           access_restrictions: Json | null
-          api_key: string
+          api_key: string | null
           category: string | null
           created_at: string
           description: string | null
@@ -26,7 +26,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean | null
-          key_hash: string | null
+          key_hash: string
           last_rotated: string | null
           last_used: string | null
           name: string
@@ -40,7 +40,7 @@ export type Database = {
         }
         Insert: {
           access_restrictions?: Json | null
-          api_key: string
+          api_key?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -49,7 +49,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
-          key_hash?: string | null
+          key_hash: string
           last_rotated?: string | null
           last_used?: string | null
           name: string
@@ -63,7 +63,7 @@ export type Database = {
         }
         Update: {
           access_restrictions?: Json | null
-          api_key?: string
+          api_key?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -72,7 +72,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
-          key_hash?: string | null
+          key_hash?: string
           last_rotated?: string | null
           last_used?: string | null
           name?: string
