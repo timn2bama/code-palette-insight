@@ -139,51 +139,6 @@ export type Database = {
           },
         ]
       }
-      blog_posts: {
-        Row: {
-          author_id: string
-          content: string
-          created_at: string
-          excerpt: string | null
-          featured_image_url: string | null
-          id: string
-          published: boolean
-          published_at: string | null
-          slug: string
-          tags: string[] | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          author_id: string
-          content: string
-          created_at?: string
-          excerpt?: string | null
-          featured_image_url?: string | null
-          id?: string
-          published?: boolean
-          published_at?: string | null
-          slug: string
-          tags?: string[] | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string
-          content?: string
-          created_at?: string
-          excerpt?: string | null
-          featured_image_url?: string | null
-          id?: string
-          published?: boolean
-          published_at?: string | null
-          slug?: string
-          tags?: string[] | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       carbon_footprint_items: {
         Row: {
           created_at: string
@@ -1549,6 +1504,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_style_preferences: {
         Row: {
           created_at: string
@@ -1679,28 +1658,19 @@ export type Database = {
       }
     }
     Views: {
-      public_blog_posts: {
-        Row: {
-          author_name: string | null
-          content: string | null
-          created_at: string | null
-          excerpt: string | null
-          featured_image_url: string | null
-          id: string | null
-          published: boolean | null
-          published_at: string | null
-          slug: string | null
-          tags: string[] | null
-          title: string | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calculate_cost_per_wear: {
         Args: { item_id: string }
         Returns: number
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_member: {
         Args: { _team_id: string }
@@ -1712,6 +1682,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "user" | "moderator" | "admin"
       recurrence_frequency: "none" | "daily" | "weekly" | "monthly"
     }
     CompositeTypes: {
@@ -1840,6 +1811,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["user", "moderator", "admin"],
       recurrence_frequency: ["none", "daily", "weekly", "monthly"],
     },
   },
