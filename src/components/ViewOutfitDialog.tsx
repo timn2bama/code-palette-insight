@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Eye, Calendar, MapPin, Shirt, Palette } from "lucide-react";
-import { toast } from "sonner";
+import { LogOutfitWornDialog } from "@/components/LogOutfitWornDialog";
 
 interface OutfitItem {
   id: string;
@@ -50,11 +50,6 @@ const ViewOutfitDialog = ({ outfit, children }: ViewOutfitDialogProps) => {
       day: 'numeric',
       year: 'numeric'
     });
-  };
-
-  const handleWearToday = () => {
-    toast.success(`"${outfit.name}" added to today's outfit plan!`);
-    setOpen(false);
   };
 
   const groupItemsByCategory = (items: OutfitItem[]) => {
@@ -221,10 +216,12 @@ const ViewOutfitDialog = ({ outfit, children }: ViewOutfitDialogProps) => {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={handleWearToday} className="flex-1">
-              <Calendar className="h-4 w-4 mr-2" />
-              Wear Today
-            </Button>
+            <LogOutfitWornDialog outfit={outfit}>
+              <Button className="flex-1">
+                <Calendar className="h-4 w-4 mr-2" />
+                Mark as Worn
+              </Button>
+            </LogOutfitWornDialog>
             <Button variant="outline" className="flex-1" disabled>
               Share Outfit
             </Button>

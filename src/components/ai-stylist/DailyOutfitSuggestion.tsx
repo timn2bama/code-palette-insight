@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, ThumbsUp, ThumbsDown, Meh, Star, Calendar, Cloud } from 'lucide-react';
+import { useOutfitLogging } from '@/hooks/useOutfitLogging';
 
 interface DailyOutfitSuggestionProps {
   suggestions: any[];
@@ -16,6 +17,7 @@ const DailyOutfitSuggestion: React.FC<DailyOutfitSuggestionProps> = ({
   onRefresh,
 }) => {
   const { toast } = useToast();
+  const { logOutfitWorn } = useOutfitLogging();
   const [loading, setLoading] = useState(false);
 
   const handleFeedback = async (suggestionId: string, feedback: string) => {
@@ -47,25 +49,45 @@ const DailyOutfitSuggestion: React.FC<DailyOutfitSuggestionProps> = ({
     }
   };
 
-  const markAsWorn = async (suggestionId: string) => {
+  const markAsWorn = async (suggestion: any) => {
     try {
       setLoading(true);
       
+      // Extract items from outfit_data
+      const items_worn = suggestion.outfit_data?.items?.map((item: any) => ({
+        item_id: item.id,
+        name: item.name,
+        category: item.category,
+        color: item.color,
+        brand: item.brand,
+      })) || [];
+
+      // Create wear log with weather context
+      await logOutfitWorn({
+        items_worn,
+        occasion: suggestion.occasion,
+        weather_temp: suggestion.weather_context?.temperature,
+        weather_condition: suggestion.weather_context?.condition,
+        style_satisfaction: 4,
+        notes: `AI-suggested outfit from ${suggestion.suggestion_date}`,
+      });
+
+      // Mark suggestion as worn
       const { error } = await supabase
         .from('daily_outfit_suggestions')
         .update({ was_worn: true })
-        .eq('id', suggestionId);
+        .eq('id', suggestion.id);
 
       if (error) throw error;
 
       toast({
-        title: "Outfit Marked as Worn",
+        title: "Outfit Logged & Marked as Worn",
         description: "Great choice! This helps us learn your preferences.",
       });
 
       onRefresh();
     } catch (error) {
-      console.error('Error marking as worn:', error);
+      console.error('Error:', error);
       toast({
         title: "Error",
         description: "Failed to mark outfit as worn",
@@ -192,7 +214,7 @@ const DailyOutfitSuggestion: React.FC<DailyOutfitSuggestionProps> = ({
                 {!suggestion.was_worn && (
                   <Button 
                     size="sm" 
-                    onClick={() => markAsWorn(suggestion.id)}
+                    onClick={() => markAsWorn(suggestion)}
                     disabled={loading}
                   >
                     Mark as Worn

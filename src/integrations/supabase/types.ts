@@ -731,6 +731,74 @@ export type Database = {
         }
         Relationships: []
       }
+      outfit_wear_logs: {
+        Row: {
+          comfort_rating: number | null
+          created_at: string
+          id: string
+          items_worn: Json
+          location: string | null
+          mood_tags: string[] | null
+          notes: string | null
+          occasion: string | null
+          outfit_id: string | null
+          style_satisfaction: number | null
+          updated_at: string
+          user_id: string
+          weather_condition: string | null
+          weather_temp: number | null
+          worn_at: string
+          worn_date: string
+          would_wear_again: boolean | null
+        }
+        Insert: {
+          comfort_rating?: number | null
+          created_at?: string
+          id?: string
+          items_worn: Json
+          location?: string | null
+          mood_tags?: string[] | null
+          notes?: string | null
+          occasion?: string | null
+          outfit_id?: string | null
+          style_satisfaction?: number | null
+          updated_at?: string
+          user_id: string
+          weather_condition?: string | null
+          weather_temp?: number | null
+          worn_at?: string
+          worn_date?: string
+          would_wear_again?: boolean | null
+        }
+        Update: {
+          comfort_rating?: number | null
+          created_at?: string
+          id?: string
+          items_worn?: Json
+          location?: string | null
+          mood_tags?: string[] | null
+          notes?: string | null
+          occasion?: string | null
+          outfit_id?: string | null
+          style_satisfaction?: number | null
+          updated_at?: string
+          user_id?: string
+          weather_condition?: string | null
+          weather_temp?: number | null
+          worn_at?: string
+          worn_date?: string
+          would_wear_again?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outfit_wear_logs_outfit_id_fkey"
+            columns: ["outfit_id"]
+            isOneToOne: false
+            referencedRelation: "outfits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outfits: {
         Row: {
           created_at: string
@@ -1671,6 +1739,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_item_wear_count: {
+        Args: { item_id: string; worn_date: string }
+        Returns: undefined
       }
       is_member: {
         Args: { _team_id: string }
