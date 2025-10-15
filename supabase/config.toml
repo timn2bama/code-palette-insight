@@ -27,7 +27,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.security-logger]
-verify_jwt = false
+verify_jwt = true
 
 [functions.reset-wardrobe]
 verify_jwt = true

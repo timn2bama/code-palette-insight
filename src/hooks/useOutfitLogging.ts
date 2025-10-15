@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { sanitizeInput } from '@/lib/security';
 
 export interface OutfitWearLog {
   outfit_id?: string;
@@ -36,12 +37,21 @@ export function useOutfitLogging() {
 
     setLoading(true);
     try {
+      // Sanitize all user inputs before storage
+      const sanitizedData = {
+        ...logData,
+        notes: logData.notes ? sanitizeInput(logData.notes) : undefined,
+        location: logData.location ? sanitizeInput(logData.location) : undefined,
+        occasion: logData.occasion ? sanitizeInput(logData.occasion) : undefined,
+        weather_condition: logData.weather_condition ? sanitizeInput(logData.weather_condition) : undefined,
+      };
+
       // 1. Insert wear log
       const { data: wearLog, error: logError } = await supabase
         .from('outfit_wear_logs')
         .insert({
           user_id: user.id,
-          ...logData,
+          ...sanitizedData,
           worn_date: logData.worn_date ? new Date(logData.worn_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         })
         .select()

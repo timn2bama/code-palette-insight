@@ -28,6 +28,8 @@ interface LogOutfitWornDialogProps {
 
 const OCCASIONS = ['work', 'casual', 'formal', 'party', 'date', 'sports', 'home'];
 const MOOD_OPTIONS = ['confident', 'comfortable', 'stylish', 'playful', 'professional', 'relaxed', 'bold'];
+const MAX_NOTES_LENGTH = 500;
+const MAX_LOCATION_LENGTH = 100;
 
 export function LogOutfitWornDialog({ outfit, children }: LogOutfitWornDialogProps) {
   const [open, setOpen] = useState(false);
@@ -134,7 +136,11 @@ export function LogOutfitWornDialog({ outfit, children }: LogOutfitWornDialogPro
               id="location"
               placeholder="e.g., Office, Downtown, Home"
               value={formData.location}
-              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value.substring(0, MAX_LOCATION_LENGTH);
+                setFormData(prev => ({ ...prev, location: value }))
+              }}
+              maxLength={MAX_LOCATION_LENGTH}
             />
           </div>
 
@@ -226,9 +232,16 @@ export function LogOutfitWornDialog({ outfit, children }: LogOutfitWornDialogPro
               id="notes"
               placeholder="Any thoughts about this outfit? What worked well?"
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value.substring(0, MAX_NOTES_LENGTH);
+                setFormData(prev => ({ ...prev, notes: value }))
+              }}
               rows={3}
+              maxLength={MAX_NOTES_LENGTH}
             />
+            <p className="text-xs text-muted-foreground">
+              {formData.notes.length}/{MAX_NOTES_LENGTH} characters
+            </p>
           </div>
 
           <div className="flex gap-2 pt-4">
